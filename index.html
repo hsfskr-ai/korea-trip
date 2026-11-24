@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Korea Trip 🇰🇷 — Perancang Percutian Kumpulan</title>
+  <title>Korea Trip Planner 🇰🇷</title>
   <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -33,38 +33,45 @@
     };
   </script>
   <style>
-    /* Kemasan scrollbar halus untuk jadual dan tab mudah alih */
+    /* Sembunyikan scrollbar pada bar navigasi mendatar */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Scrollbar kemas untuk jadual lebar pada skrin kecil */
     .thin-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
     .thin-scroll::-webkit-scrollbar-track { background: transparent; }
-    .thin-scroll::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.4); border-radius: 9999px; }
+    .thin-scroll::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.45); border-radius: 9999px; }
+
     @keyframes fadeSlideUp {
-      from { opacity: 0; transform: translateY(10px); }
+      from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .animate-in { animation: fadeSlideUp 0.22s ease-out forwards; }
+    .animate-in { animation: fadeSlideUp 0.2s ease-out forwards; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 font-sans antialiased transition-colors duration-200 selection:bg-brand-600 selection:text-white">
 
-  <!-- ==================== TOP HERO HEADER ==================== -->
+  <!-- ==================== HEADER UTAMA & BANNER RINGKASAN ==================== -->
   <header class="bg-gradient-to-br from-[#1f3a5f] via-[#2b4872] to-[#e8505b] text-white shadow-lg">
     <div class="max-w-6xl mx-auto px-4 pt-5 pb-6 sm:px-6">
-      <!-- Bar Atas: Tajuk & Kawalan Pantas -->
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div class="flex items-center gap-2.5">
+          <div class="flex flex-wrap items-center gap-2.5">
             <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Korea Trip 🇰🇷</h1>
-            <span id="header-badge-members" class="text-xs font-semibold bg-white/15 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/20">
-              6 Ahli
-            </span>
+            <!-- Pil Status Penyegerakan Langsung (Live Sync) -->
+            <button id="btn-sync-pill" type="button"
+              class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 transition border border-white/25 backdrop-blur-sm"
+              title="Klik untuk refresh atau semak status sambungan Google Sheet">
+              <span id="sync-dot" class="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
+              <span id="sync-label">Menyambung…</span>
+              <span class="opacity-80">⟳</span>
+            </button>
           </div>
-          <p class="text-xs sm:text-sm text-white/80 mt-0.5">Perancang Percutian Kumpulan · Simpanan Automatik</p>
+          <p class="text-xs sm:text-sm text-white/80 mt-0.5">Perancang Percutian Kumpulan · Auto-Sync Google Sheet</p>
         </div>
 
         <div class="flex items-center gap-2">
-          <!-- Butang Toggle Pengira KRW <-> RM -->
+          <!-- Butang Buka/Tutup Pengira KRW <-> RM -->
           <button id="btn-toggle-converter" type="button"
             class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white/15 hover:bg-white/25 active:scale-95 transition border border-white/20 backdrop-blur-sm"
             title="Buka / Tutup Pengira Tukaran KRW ↔ RM">
@@ -72,7 +79,7 @@
             <span>KRW ↔ RM</span>
           </button>
 
-          <!-- Butang Toggle Mod Gelap / Cerah -->
+          <!-- Butang Tukar Tema Gelap / Cerah -->
           <button id="btn-theme" type="button"
             class="p-2.5 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition border border-white/20 backdrop-blur-sm"
             title="Tukar Mod Cerah / Gelap" aria-label="Tukar Tema">
@@ -81,14 +88,14 @@
         </div>
       </div>
 
-      <!-- Ringkasan Trip (Countdown, Kadar, Penerbangan, Penginapan, Alamat Hangul) -->
+      <!-- Kad Ringkasan Percutian (Countdown, Kadar, Penerbangan, Penginapan, Alamat Hangul) -->
       <div id="trip-summary-banner" class="mt-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3.5 sm:p-4 text-sm">
-        <!-- Diisi secara dinamik oleh JS -->
+        <!-- Diisi secara dinamik oleh renderSummaryBanner() -->
       </div>
     </div>
   </header>
 
-  <!-- ==================== PENGIRA TUKARAN KRW <-> RM ==================== -->
+  <!-- ==================== PENGIRA TUKARAN DUA HALA (KRW <-> RM) ==================== -->
   <section id="converter-drawer" class="max-w-6xl mx-auto px-4 sm:px-6 pt-4">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
       <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
@@ -103,7 +110,7 @@
 
       <div class="grid grid-cols-1 sm:grid-cols-11 gap-2.5 items-center">
         <!-- Input KRW -->
-        <div class="sm:col-span-5 relative">
+        <div class="sm:col-span-5">
           <label for="inp-krw" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
             Korean Won (₩ KRW)
           </label>
@@ -115,12 +122,12 @@
         </div>
 
         <!-- Ikon Tukar -->
-        <div class="sm:col-span-1 flex justify-center pt-3 sm:pt-5">
+        <div class="sm:col-span-1 flex justify-center pt-1 sm:pt-5">
           <span class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 font-bold text-sm">⇄</span>
         </div>
 
         <!-- Input RM -->
-        <div class="sm:col-span-5 relative">
+        <div class="sm:col-span-5">
           <label for="inp-rm" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
             Ringgit Malaysia (RM)
           </label>
@@ -132,7 +139,7 @@
         </div>
       </div>
 
-      <!-- Butang Preset Pantas -->
+      <!-- Butang Nilai Pantas -->
       <div class="flex flex-wrap items-center gap-1.5 mt-3">
         <span class="text-xs text-slate-500 dark:text-slate-400 mr-1">Pantas:</span>
         <button type="button" data-krw-preset="1000" class="preset-krw px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-brand-600 hover:text-white dark:bg-slate-800 dark:hover:bg-brand-500 transition">₩1,000</button>
@@ -144,31 +151,30 @@
     </div>
   </section>
 
-  <!-- ==================== NAVIGATION TABS ==================== -->
+  <!-- ==================== BAR NAVIGASI TAB ==================== -->
   <nav class="sticky top-0 z-20 bg-slate-50/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 mt-4">
     <div class="max-w-6xl mx-auto px-4 sm:px-6">
       <div id="nav-tabs" class="flex items-center gap-2 py-2.5 overflow-x-auto no-scrollbar">
-        <!-- Tab buttons dijana oleh JS -->
+        <!-- Butang tab dijana oleh JS -->
       </div>
     </div>
   </nav>
 
-  <!-- ==================== MAIN CONTENT AREA ==================== -->
+  <!-- ==================== RUANG KANDUNGAN UTAMA ==================== -->
   <main id="main-content" class="max-w-6xl mx-auto px-4 sm:px-6 pt-5 pb-28">
-    <!-- Kandungan tab aktif dipaparkan di sini -->
+    <!-- Kandungan tab aktif dipaparkan serta-merta tanpa skrin menunggu -->
   </main>
 
-  <!-- ==================== FLOATING ACTION BUTTON (+ TAMBAH) ==================== -->
+  <!-- ==================== BUTANG TERAPUNG (+ TAMBAH) ==================== -->
   <button id="fab-add" type="button"
     class="fixed right-5 bottom-5 z-20 flex items-center gap-2 bg-brand-600 hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-600 text-white font-semibold px-5 py-3.5 rounded-full shadow-lg shadow-brand-600/30 active:scale-95 transition">
     <span class="text-lg leading-none">+</span>
     <span id="fab-label">Tambah</span>
   </button>
 
-  <!-- ==================== MODAL CONTAINER ==================== -->
+  <!-- ==================== BEKAS MODAL & TOAST ==================== -->
   <div id="modal-root"></div>
 
-  <!-- ==================== TOAST NOTIFICATION ==================== -->
   <div id="toast-box"
     class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-all duration-300 transform translate-y-2">
     <div id="toast-msg" class="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs sm:text-sm font-medium px-4 py-2.5 rounded-full shadow-xl">
@@ -176,19 +182,24 @@
     </div>
   </div>
 
-  <!-- Hidden textarea untuk fallback salin papan keratan (clipboard) -->
-  <textarea id="clipboard-helper" class="sr-only" aria-hidden="true"></textarea>
+  <!-- Elemen tersembunyi untuk menyalin teks ke papan keratan -->
+  <textarea id="clipboard-helper" class="fixed -left-[9999px] top-0 opacity-0" aria-hidden="true"></textarea>
 
   <script>
     /**
      * ============================================================================
-     * KOREA TRIP PLANNER — APLIKASI WEB INTERAKTIF LENGKAP
-     * Data disimpan secara automatik ke localStorage pelayar & menyokong eksport/import.
+     * KOREA TRIP PLANNER — AUTO-CONNECT GOOGLE APPS SCRIPT + CACHE-FIRST ENGINE
      * ============================================================================
      */
 
-    const STORAGE_KEY = 'korea_trip_planner_v1';
-    const THEME_KEY = 'korea_trip_theme';
+    // URL Web App Google Apps Script lalai yang ditanam terus supaya semua 6 ahli
+    // automatik bersambung dengan Google Sheet 'Korea_Trip_Planner' tanpa tetapan manual.
+    const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYNeYD4tSRsbYAxiAFSESgv3cGBbxK5Rqz8l7kJr3u0jzBBTkeqLQtIJArbVs5KoYJdg/exec';
+
+    const API_URL_KEY = 'korea_trip_custom_script_url_v1';
+    const CACHE_KEY = 'korea_trip_sheet_cache_v2';
+    const THEME_KEY = 'korea_trip_theme_v1';
+    const POLL_MS = 20000; // Segerak automatik setiap 20 saat apabila tab aktif
 
     const TABS = [
       { id: 'Checklist', label: '✅ Checklist' },
@@ -201,180 +212,341 @@
     const STATUS_OPTIONS = ['Belum', 'Dalam proses', 'Siap'];
     const YN_OPTIONS = ['Belum', 'Dah'];
 
-    // Data permulaan tepat seperti dalam Google Sheet pengguna
-    function getDefaultData() {
-      const members = [
-        { id: 'm1', nama: 'Hasif', telefon: '', noPasport: '', tarikhLuput: '', waris: '', noWaris: '', alahan: '' },
-        { id: 'm2', nama: 'Aiman', telefon: '', noPasport: '', tarikhLuput: '', waris: '', noWaris: '', alahan: '' },
-        { id: 'm3', nama: 'Ina', telefon: '', noPasport: '', tarikhLuput: '', waris: '', noWaris: '', alahan: '' },
-        { id: 'm4', nama: 'Atika', telefon: '', noPasport: '', tarikhLuput: '', waris: '', noWaris: '', alahan: '' },
-        { id: 'm5', nama: 'Fifie', telefon: '', noPasport: '', tarikhLuput: '', waris: '', noWaris: '', alahan: '' },
-        { id: 'm6', nama: 'Shikkin', telefon: '', noPasport: '', tarikhLuput: '', waris: '', noWaris: '', alahan: '' }
-      ];
+    // Kod Google Apps Script (Code.gs) lengkap untuk salinan sandaran dalam tab Tetapan
+    const APPS_SCRIPT_CODE = `// ============================================================================
+// Korea Trip Planner — Google Apps Script Backend (JSON API)
+// Tampal kod ini dalam: Google Sheet > Extensions > Apps Script > Code.gs
+// ============================================================================
 
-      const makeStatusMap = () => ({
-        Hasif: 'Belum',
-        Aiman: 'Belum',
-        Ina: 'Belum',
-        Atika: 'Belum',
-        Fifie: 'Belum',
-        Shikkin: 'Belum'
-      });
+const SS_ID = '1kQrcKRAAM_34fbBWrftu-NnNM7hZ7G-Y9Rjv1mft5z8';
+const SHEETS = ['Checklist', 'Itinerary', 'Ahli', 'Tetapan'];
+const MAX_ROW = 200;
+const FORMULA_COLS = { Checklist: ['Siap'], Itinerary: ['Setara (RM)'] };
+const FORMULA_CHECK = { Checklist: ['Anggaran / orang (RM)'], Tetapan: ['Nilai'] };
+const NUMERIC = /\\((RM|KRW)\\)|^Hari$/;
 
+function getSS_() {
+  return SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(SS_ID);
+}
+
+function jsonOut_(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// Memulangkan data JSON untuk panggilan GET dari GitHub Pages / pelayar
+function doGet(e) {
+  try {
+    return jsonOut_({ ok: true, data: getData() });
+  } catch (err) {
+    return jsonOut_({ ok: false, error: err.message });
+  }
+}
+
+// Menerima perubahan (updateCell / saveRow / removeRow) melalui POST text/plain
+function doPost(e) {
+  try {
+    const raw = (e && e.postData && e.postData.contents) || '{}';
+    const body = JSON.parse(raw);
+    const action = body.action;
+
+    if (action === 'getData') {
+      return jsonOut_({ ok: true, data: getData() });
+    }
+    if (action === 'updateCell') {
+      updateCell(body.sheet, Number(body.row), body.header, body.value);
+      return jsonOut_({ ok: true, sheet: body.sheet, sheetData: readSheet_(body.sheet) });
+    }
+    if (action === 'saveRow') {
+      const sheetData = saveRow(body.sheet, body.row ? Number(body.row) : null, body.values || {});
+      return jsonOut_({ ok: true, sheet: body.sheet, sheetData: sheetData });
+    }
+    if (action === 'removeRow') {
+      const sheetData = removeRow(body.sheet, Number(body.row));
+      return jsonOut_({ ok: true, sheet: body.sheet, sheetData: sheetData });
+    }
+    return jsonOut_({ ok: false, error: 'Tindakan tidak dikenali: ' + action });
+  } catch (err) {
+    return jsonOut_({ ok: false, error: err.message });
+  }
+}
+
+function getData() {
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get('data_v2');
+  if (hit) {
+    try { return JSON.parse(hit); } catch (e) {}
+  }
+  const ss = getSS_();
+  const out = {};
+  SHEETS.forEach(n => { out[n] = readSheet_(n, ss); });
+  try { cache.put('data_v2', JSON.stringify(out), 10); } catch (e) {}
+  return out;
+}
+
+function invalidate_() {
+  try { CacheService.getScriptCache().remove('data_v2'); } catch (e) {}
+}
+
+function limit_(sh) {
+  return Math.min(MAX_ROW, sh.getMaxRows());
+}
+
+function readSheet_(name, ss) {
+  ss = ss || getSS_();
+  const sh = ss.getSheetByName(name);
+  if (!sh) return { headers: [], rows: [], formulaCols: [] };
+  const fcols = FORMULA_COLS[name] || [];
+  const n = limit_(sh);
+  const lastCol = sh.getLastColumn();
+  if (lastCol < 1 || n < 1) return { headers: [], rows: [], formulaCols: fcols };
+
+  const values = sh.getRange(1, 1, n, lastCol).getValues();
+  const headers = values[0].map(String);
+  const fchk = (FORMULA_CHECK[name] || []).map(h => headers.indexOf(h)).filter(c => c >= 0);
+  const fmap = {};
+  fchk.forEach(c => { fmap[c] = sh.getRange(1, c + 1, n, 1).getFormulas(); });
+
+  let tz = null;
+  const rows = [];
+  for (let i = 1; i < values.length; i++) {
+    const cells = values[i].map(v => {
+      if (v instanceof Date) {
+        tz = tz || ss.getSpreadsheetTimeZone();
+        return Utilities.formatDate(v, tz, 'dd/MM/yyyy');
+      }
+      return v === null || v === undefined ? '' : String(v);
+    });
+    const hasData = headers.some((h, c) => fcols.indexOf(h) < 0 && cells[c] !== '');
+    if (!hasData) continue;
+    rows.push({
+      row: i + 1,
+      cells: cells,
+      f: fchk.filter(c => fmap[c][i][0])
+    });
+  }
+  return { headers: headers, rows: rows, formulaCols: fcols };
+}
+
+function sheet_(name) {
+  if (SHEETS.indexOf(name) < 0) throw new Error('Sheet tak sah: ' + name);
+  const sh = getSS_().getSheetByName(name);
+  if (!sh) throw new Error('Sheet "' + name + '" tak jumpa');
+  return sh;
+}
+
+function withLock_(fn) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try { return fn(); } finally { lock.releaseLock(); }
+}
+
+function clean_(header, v) {
+  if (v === null || v === undefined) return '';
+  if (NUMERIC.test(header)) {
+    if (v === '') return '';
+    const n = Number(v);
+    return isNaN(n) ? String(v) : n;
+  }
+  v = String(v);
+  return v.charAt(0) === '=' ? "'" + v : v;
+}
+
+function writeCells_(sh, name, row, values) {
+  const headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+  const fcols = FORMULA_COLS[name] || [];
+  headers.forEach((h, i) => {
+    if (fcols.indexOf(h) >= 0) return;
+    if (!Object.prototype.hasOwnProperty.call(values, h)) return;
+    const cell = sh.getRange(row, i + 1);
+    if (cell.getFormula()) return;
+    cell.setValue(clean_(h, values[h]));
+  });
+}
+
+function checkRow_(sh, row) {
+  if (!(row >= 2 && row <= limit_(sh))) throw new Error('Baris tak sah: ' + row);
+}
+
+function updateCell(name, row, header, value) {
+  return withLock_(() => {
+    const sh = sheet_(name);
+    checkRow_(sh, row);
+    const o = {};
+    o[header] = value;
+    writeCells_(sh, name, row, o);
+    invalidate_();
+    SpreadsheetApp.flush();
+    return true;
+  });
+}
+
+function saveRow(name, row, values) {
+  return withLock_(() => {
+    const sh = sheet_(name);
+    let target = row;
+    if (target) {
+      checkRow_(sh, target);
+    } else {
+      target = findEmptyRow_(sh, name);
+      if (!target) throw new Error('Sheet penuh (had ' + MAX_ROW + ' baris)');
+    }
+    writeCells_(sh, name, target, values);
+    invalidate_();
+    SpreadsheetApp.flush();
+    return readSheet_(name);
+  });
+}
+
+function removeRow(name, row) {
+  return withLock_(() => {
+    const sh = sheet_(name);
+    checkRow_(sh, row);
+    const headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+    const fcols = FORMULA_COLS[name] || [];
+    headers.forEach((h, i) => {
+      if (fcols.indexOf(h) >= 0) return;
+      const cell = sh.getRange(row, i + 1);
+      if (!cell.getFormula()) cell.clearContent();
+    });
+    invalidate_();
+    SpreadsheetApp.flush();
+    return readSheet_(name);
+  });
+}
+
+function findEmptyRow_(sh, name) {
+  const fcols = FORMULA_COLS[name] || [];
+  const values = sh.getRange(1, 1, limit_(sh), sh.getLastColumn()).getValues();
+  const headers = values[0].map(String);
+  for (let i = 1; i < values.length; i++) {
+    const empty = headers.every((h, c) => fcols.indexOf(h) >= 0 || values[i][c] === '' || values[i][c] === null);
+    if (empty) return i + 1;
+  }
+  const max = sh.getMaxRows();
+  if (max < MAX_ROW) {
+    sh.insertRowsAfter(max, Math.min(20, MAX_ROW - max));
+    return max + 1;
+  }
+  return 0;
+}`;
+
+    // ==================== DATA PERMULAAN (FALLBACK SEGERA SEBELUM SYNC) ====================
+    function getDefaultSheetData() {
       return {
-        settings: {
-          kadar: 0.003063,
-          tarikhBerlepas: '',
-          tarikhBalik: '',
-          penerbangan: '',
-          penginapan: '',
-          alamatHangul: ''
+        Checklist: {
+          headers: ['Fasa', 'Kategori', 'Item', 'Anggaran / orang (RM)', 'Hasif', 'Aiman', 'Ina', 'Atika', 'Fifie', 'Shikkin', 'Siap', 'Nota'],
+          formulaCols: ['Siap'],
+          rows: [
+            { row: 2, cells: ['Before', 'Pengangkutan', 'Tiket penerbangan', '2000', 'Belum', 'Belum', 'Belum', 'Belum', 'Belum', 'Belum', '0/6', 'Anggaran RM2k'], f: [] },
+            { row: 3, cells: ['Before', 'Penginapan', 'Rumah / penginapan', '1000', 'Belum', 'Belum', 'Belum', 'Belum', 'Belum', 'Belum', '0/6', 'Maksimum RM1k seorang'], f: [] },
+            { row: 4, cells: ['Before', 'Kerja', 'Cuti', '', 'Belum', 'Belum', 'Belum', 'Belum', 'Belum', 'Belum', '0/6', '9–10 hari'], f: [] },
+            { row: 5, cells: ['Before', 'Dokumen', 'Buat / renew pasport', '200', 'Belum', 'Belum', 'Belum', 'Belum', 'Belum', 'Belum', '0/6', '5 tahun RM200 / 10 tahun RM350'], f: [] },
+            { row: 6, cells: ['Before', 'Komunikasi', 'Simcard / eSIM / roaming', '', 'Belum', 'Belum', 'Belum', 'Belum', 'Belum', 'Belum', '0/6', 'Belum tentukan pilihan'], f: [] },
+            { row: 7, cells: ['Before', 'Insurans', 'Travel insurance', '42.75', 'Belum', 'Belum', 'Belum', 'Belum', 'Belum', 'Belum', '0/6', 'Etiqa RM42.75 / Tune RM54'], f: [] },
+            { row: 8, cells: ['Before', 'Dokumen', 'K-ETA', '30.63', 'Belum', 'Belum', 'Belum', 'Belum', 'Belum', 'Belum', '0/6', '10,000 won. Anggaran RM auto ikut kadar semasa di sheet Tetapan'], f: [] }
+          ]
         },
-        members,
-        checklist: [
-          {
-            id: 'c1',
-            fasa: 'Before',
-            kategori: 'Pengangkutan',
-            item: 'Tiket penerbangan',
-            anggaran: 2000.00,
-            statusAhli: makeStatusMap(),
-            nota: 'Anggaran RM2k'
-          },
-          {
-            id: 'c2',
-            fasa: 'Before',
-            kategori: 'Penginapan',
-            item: 'Rumah / penginapan',
-            anggaran: 1000.00,
-            statusAhli: makeStatusMap(),
-            nota: 'Maksimum RM1k seorang'
-          },
-          {
-            id: 'c3',
-            fasa: 'Before',
-            kategori: 'Kerja',
-            item: 'Cuti',
-            anggaran: 0,
-            statusAhli: makeStatusMap(),
-            nota: '9–10 hari'
-          },
-          {
-            id: 'c4',
-            fasa: 'Before',
-            kategori: 'Dokumen',
-            item: 'Buat / renew pasport',
-            anggaran: 200.00,
-            statusAhli: makeStatusMap(),
-            nota: '5 tahun RM200 / 10 tahun RM350'
-          },
-          {
-            id: 'c5',
-            fasa: 'Before',
-            kategori: 'Komunikasi',
-            item: 'Simcard / eSIM / roaming',
-            anggaran: 0,
-            statusAhli: makeStatusMap(),
-            nota: 'Belum tentukan pilihan'
-          },
-          {
-            id: 'c6',
-            fasa: 'Before',
-            kategori: 'Insurans',
-            item: 'Travel insurance',
-            anggaran: 42.75,
-            statusAhli: makeStatusMap(),
-            nota: 'Etiqa RM42.75 / Tune RM54'
-          },
-          {
-            id: 'c7',
-            fasa: 'Before',
-            kategori: 'Dokumen',
-            item: 'K-ETA',
-            anggaran: 30.63,
-            statusAhli: makeStatusMap(),
-            nota: '10,000 won. Anggaran RM auto ikut kadar semasa'
-          }
-        ],
-        itinerary: [
-          {
-            id: 'i1',
-            hari: 1,
-            tarikh: '',
-            masa: '08:30',
-            aktiviti: 'Ketibaan di Incheon & naik AREX Express ke Seoul Station',
-            lokasi: 'Incheon International Airport Terminal 1',
-            bandar: 'Incheon / Seoul',
-            pengangkutan: 'AREX Express Train',
-            anggaranKrw: 11000,
-            tempahan: '',
-            status: 'Belum',
-            nota: 'Beli kad T-Money di kedai serbaneka (CU / GS25) & topup ₩20,000'
-          },
-          {
-            id: 'i2',
-            hari: 1,
-            tarikh: '',
-            masa: '14:00',
-            aktiviti: 'Check-in Penginapan & Rehat Sebentar',
-            lokasi: 'Myeongdong',
-            bandar: 'Seoul',
-            pengangkutan: 'Subway Line 4',
-            anggaranKrw: 0,
-            tempahan: '',
-            status: 'Belum',
-            nota: 'Simpan beg jika sampai awal sebelum waktu check-in'
-          },
-          {
-            id: 'i3',
-            hari: 1,
-            tarikh: '',
-            masa: '18:30',
-            aktiviti: 'Jalan-jalan Malam & Street Food Halal / Mesra Muslim',
-            lokasi: 'Myeongdong Night Market',
-            bandar: 'Seoul',
-            pengangkutan: 'Jalan kaki',
-            anggaranKrw: 25000,
-            tempahan: '',
-            status: 'Belum',
-            nota: 'Tukar duit tambahan di pengurup wang berhampiran Kedutaan China'
-          }
-        ]
+        Itinerary: {
+          headers: ['Hari', 'Tarikh', 'Masa', 'Aktiviti', 'Lokasi', 'Bandar', 'Pengangkutan', 'Anggaran (KRW)', 'Setara (RM)', 'Tempahan / Link', 'Status', 'Nota'],
+          formulaCols: ['Setara (RM)'],
+          rows: []
+        },
+        Ahli: {
+          headers: ['Nama', 'No. Telefon', 'No. Pasport', 'Tarikh Luput Pasport', 'Waris Kecemasan', 'No. Waris', 'Alahan / Nota Kesihatan'],
+          formulaCols: [],
+          rows: [
+            { row: 2, cells: ['Hasif', '', '', '', '', '', ''], f: [] },
+            { row: 3, cells: ['Aiman', '', '', '', '', '', ''], f: [] },
+            { row: 4, cells: ['Ina', '', '', '', '', '', ''], f: [] },
+            { row: 5, cells: ['Atika', '', '', '', '', '', ''], f: [] },
+            { row: 6, cells: ['Fifie', '', '', '', '', '', ''], f: [] },
+            { row: 7, cells: ['Shikkin', '', '', '', '', '', ''], f: [] }
+          ]
+        },
+        Tetapan: {
+          headers: ['Kunci', 'Nilai', 'Nota'],
+          formulaCols: [],
+          rows: [
+            { row: 2, cells: ['Kadar auto (1 KRW = RM)', '0.003063', 'Diambil secara automatik melalui GOOGLEFINANCE'], f: [1] },
+            { row: 3, cells: ['Kadar manual (cadangan)', '0.003066', 'Digunakan jika kadar auto tiada sambungan'], f: [] },
+            { row: 4, cells: ['Kadar digunakan', '0.003063', 'Kadar aktif untuk semua pengiraan RM'], f: [1] },
+            { row: 5, cells: ['Tarikh berlepas', '', 'Format: dd/MM/yyyy'], f: [] },
+            { row: 6, cells: ['Tarikh balik', '', 'Format: dd/MM/yyyy'], f: [] },
+            { row: 7, cells: ['Penerbangan', '', 'Nombor penerbangan, masa berlepas & tiba'], f: [] },
+            { row: 8, cells: ['Penginapan (nama & alamat)', '', 'Alamat penuh dalam Bahasa Inggeris'], f: [] },
+            { row: 9, cells: ['Alamat dalam Hangul', '', 'Tunjukkan kepada pemandu teksi di Korea'], f: [] }
+          ]
+        }
       };
     }
 
-    // Keadaan Aplikasi (Application State)
+    // ==================== KEADAAN APLIKASI (STATE) ====================
     const state = {
-      data: loadState(),
+      apiUrl: getActiveScriptUrl(),
+      data: loadCachedData(),
       activeTab: 'Checklist',
       activePhase: 'Before',
-      showConverter: true
+      showConverter: true,
+      syncStatus: 'syncing', // 'syncing' | 'live' | 'error'
+      lastSyncTime: null,
+      lastSyncError: '',
+      pendingOps: 0,
+      modalOpen: false,
+      lastJsonHash: ''
     };
 
-    function loadState() {
+    // Mengembalikan URL tersuai jika pengguna pernah simpan override; jika tiada, guna DEFAULT_SCRIPT_URL
+    function getActiveScriptUrl() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const custom = localStorage.getItem(API_URL_KEY);
+        if (custom && custom.trim()) return custom.trim();
+      } catch (e) {}
+      return DEFAULT_SCRIPT_URL;
+    }
+
+    function setCustomScriptUrl(url) {
+      const clean = (url || '').trim();
+      try {
+        if (!clean || clean === DEFAULT_SCRIPT_URL) {
+          localStorage.removeItem(API_URL_KEY);
+          state.apiUrl = DEFAULT_SCRIPT_URL;
+        } else {
+          localStorage.setItem(API_URL_KEY, clean);
+          state.apiUrl = clean;
+        }
+      } catch (e) {
+        state.apiUrl = clean || DEFAULT_SCRIPT_URL;
+      }
+    }
+
+    function loadCachedData() {
+      try {
+        const raw = localStorage.getItem(CACHE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed && parsed.settings && Array.isArray(parsed.members)) {
+          if (parsed && parsed.Checklist && parsed.Tetapan && parsed.Ahli && parsed.Itinerary) {
             return parsed;
           }
         }
       } catch (e) {
-        console.warn('Gagal membaca localStorage, menggunakan data asal:', e);
+        console.warn('Cache tempatan tidak sah, memuatkan data lalai:', e);
       }
-      return getDefaultData();
+      return getDefaultSheetData();
     }
 
-    function saveState() {
+    function saveCachedData() {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+        const serialized = JSON.stringify(state.data);
+        state.lastJsonHash = serialized;
+        localStorage.setItem(CACHE_KEY, serialized);
       } catch (e) {
-        showToast('Amaran: Gagal menyimpan ke storan pelayar');
+        console.warn('Gagal menyimpan cache localStorage:', e);
       }
     }
 
-    // ==================== HELPER FUNCTIONS ====================
+    // ==================== FUNGSI BANTUAN UMUM ====================
     const $ = (sel) => document.querySelector(sel);
     const esc = (str) => String(str ?? '').replace(/[&<>"']/g, (c) => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -382,8 +554,18 @@
 
     const linkify = (str) => esc(str).replace(
       /(https?:\/\/[^\s<]+)/g,
-      '<a href="$1" target="_blank" rel="noopener noreferrer" class="underline text-brand-600 dark:text-brand-400 hover:opacity-80 font-medium">Buka Pautan ↗</a>'
+      '<a href="$1" target="_blank" rel="noopener noreferrer" class="underline text-brand-600 dark:text-brand-400 hover:opacity-80 font-medium">pautan ↗</a>'
     );
+
+    const idx = (d, header) => (d && Array.isArray(d.headers)) ? d.headers.indexOf(header) : -1;
+    const idxAny = (d, candidates) => {
+      if (!d || !Array.isArray(d.headers)) return -1;
+      for (const h of candidates) {
+        const i = d.headers.indexOf(h);
+        if (i >= 0) return i;
+      }
+      return -1;
+    };
 
     const fmtMoney = (val) => {
       const n = Number(val);
@@ -397,8 +579,6 @@
       return Math.round(n).toLocaleString('en-MY');
     };
 
-    const uid = (prefix = 'id') => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-
     function showToast(message) {
       const box = $('#toast-box');
       const msg = $('#toast-msg');
@@ -409,75 +589,293 @@
       window.__toastTimer = setTimeout(() => {
         box.classList.remove('opacity-100', 'translate-y-0');
         box.classList.add('opacity-0', 'translate-y-2');
-      }, 2200);
+      }, 2400);
     }
 
-    function copyTextToClipboard(text, successLabel = 'Berjaya disalin!') {
+    function copyTextToClipboard(text, successMsg = 'Berjaya disalin!') {
       if (!text) return;
       const helper = $('#clipboard-helper');
       helper.value = text;
-      helper.classList.remove('sr-only');
+      helper.focus();
       helper.select();
       helper.setSelectionRange(0, 99999);
       try {
         document.execCommand('copy');
-        showToast(successLabel);
-      } catch (err) {
-        showToast('Tidak dapat menyalin secara automatik');
+        showToast(successMsg);
+      } catch (e) {
+        showToast('Gagal menyalin teks secara automatik');
       }
-      helper.classList.add('sr-only');
     }
 
-    // Parse ISO YYYY-MM-DD ke objek Date tempatan
-    function parseISODate(isoStr) {
-      if (!isoStr) return null;
-      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoStr.trim());
-      if (!m) return null;
-      return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    // ==================== PARSING TARIKH (dd/MM/yyyy & yyyy-MM-dd) ====================
+    function parseDMY(s) {
+      if (!s) return null;
+      const str = String(s).trim();
+      let m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(str);
+      if (m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+      m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str);
+      if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+      return null;
     }
 
-    function formatDisplayDate(isoStr) {
-      const d = parseISODate(isoStr);
-      if (!d) return '';
-      return d.toLocaleDateString('ms-MY', { day: '2-digit', month: 'short', year: 'numeric' });
+    function toISO(s) {
+      if (!s) return '';
+      const str = String(s).trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+      const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(str);
+      return m ? `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}` : '';
     }
 
-    // Semakan status tarikh luput pasport
-    function getPassportStatus(tarikhLuputIso) {
-      const exp = parseISODate(tarikhLuputIso);
-      if (!exp) return { code: 'empty', html: '<span class="text-xs text-slate-400">Belum diisi</span>' };
+    function fromISO(s) {
+      if (!s) return '';
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s).trim());
+      return m ? `${m[3]}/${m[2]}/${m[1]}` : String(s).trim();
+    }
 
+    // ==================== HELPER DATA SHEET ====================
+    function getSettingsMap() {
+      const t = state.data.Tetapan;
+      const map = {};
+      if (t) {
+        const iK = idx(t, 'Kunci');
+        const iV = idx(t, 'Nilai');
+        t.rows.forEach((r) => {
+          if (iK >= 0 && iV >= 0) map[r.cells[iK]] = r.cells[iV];
+        });
+      }
+      return map;
+    }
+
+    function getActiveRate() {
+      const s = getSettingsMap();
+      const used = Number(s['Kadar digunakan']);
+      if (!isNaN(used) && used > 0) return used;
+      const auto = Number(s['Kadar auto (1 KRW = RM)']);
+      if (!isNaN(auto) && auto > 0) return auto;
+      const man = Number(s['Kadar manual (cadangan)']);
+      if (!isNaN(man) && man > 0) return man;
+      return 0.003063;
+    }
+
+    function getMembersList() {
+      const a = state.data.Ahli;
+      const c = state.data.Checklist;
+      const namesFromAhli = a ? a.rows.map((r) => r.cells[idx(a, 'Nama')]).filter(Boolean) : [];
+      if (c && Array.isArray(c.headers)) {
+        const matched = c.headers.filter((h) => namesFromAhli.includes(h));
+        if (matched.length) return matched;
+        const start = idx(c, 'Anggaran / orang (RM)');
+        const end = idx(c, 'Siap');
+        if (start >= 0 && end > start + 1) {
+          return c.headers.slice(start + 1, end);
+        }
+      }
+      return namesFromAhli.length ? namesFromAhli : ['Hasif', 'Aiman', 'Ina', 'Atika', 'Fifie', 'Shikkin'];
+    }
+
+    function getPassportStatus(val) {
+      if (!val) return { code: 'empty', html: '<span class="text-xs text-slate-400">Belum diisi</span>' };
+      const exp = parseDMY(val);
+      if (!exp) return { code: 'empty', html: `<span class="text-xs text-slate-500">${esc(val)}</span>` };
+
+      const s = getSettingsMap();
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-
-      const ret = parseISODate(state.data.settings.tarikhBalik) || parseISODate(state.data.settings.tarikhBerlepas) || today;
-      const sixMonthsAfter = new Date(ret.getFullYear(), ret.getMonth() + 6, ret.getDate());
+      const ref = parseDMY(s['Tarikh balik']) || parseDMY(s['Tarikh berlepas']) || today;
+      const sixMonths = new Date(ref.getFullYear(), ref.getMonth() + 6, ref.getDate());
 
       if (exp < today) {
         return {
           code: 'bad',
-          html: '<span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300 border border-red-200 dark:border-red-800">⚠️ Dah Luput</span>'
+          html: '<span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300 border border-red-200 dark:border-red-800">⚠️ Dah luput</span>'
         };
       }
-      if (exp < sixMonthsAfter) {
+      if (exp < sixMonths) {
         return {
           code: 'bad',
-          html: '<span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">⚠️ Kurang 6 Bulan</span>'
+          html: '<span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">⚠️ Kurang 6 bulan</span>'
         };
       }
       return {
         code: 'good',
-        html: '<span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">✅ Sah</span>'
+        html: '<span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">✅ OK</span>'
       };
     }
 
     function getPassportWarnings() {
-      return state.data.members
-        .filter((m) => getPassportStatus(m.tarikhLuput).code === 'bad')
-        .map((m) => m.nama);
+      const a = state.data.Ahli;
+      if (!a) return [];
+      const iN = idx(a, 'Nama');
+      const iP = idx(a, 'Tarikh Luput Pasport');
+      if (iN < 0 || iP < 0) return [];
+      return a.rows
+        .filter((r) => getPassportStatus(r.cells[iP]).code === 'bad')
+        .map((r) => r.cells[iN])
+        .filter(Boolean);
     }
 
-    // ==================== THEME MANAGEMENT ====================
+    // ==================== PENYEGERAKAN DUA HALA (GOOGLE APPS SCRIPT) ====================
+    function updateSyncPillUI() {
+      const dot = $('#sync-dot');
+      const label = $('#sync-label');
+      if (!dot || !label) return;
+
+      if (state.syncStatus === 'syncing' || state.pendingOps > 0) {
+        dot.className = 'w-2 h-2 rounded-full bg-sky-400 animate-pulse';
+        label.textContent = 'Menyambung…';
+        return;
+      }
+
+      if (state.syncStatus === 'error') {
+        dot.className = 'w-2 h-2 rounded-full bg-red-400';
+        label.textContent = 'Ralat Sync';
+        return;
+      }
+
+      if (state.syncStatus === 'live') {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        const timeStr = state.lastSyncTime
+          ? state.lastSyncTime.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })
+          : '';
+        label.textContent = timeStr ? `Live · ${timeStr}` : 'Live';
+        return;
+      }
+
+      dot.className = 'w-2 h-2 rounded-full bg-sky-400 animate-pulse';
+      label.textContent = 'Menyambung…';
+    }
+
+    // Tarik data terkini dari Google Sheet melalui GET (redirect: 'follow')
+    async function fetchFromSheet({ silent = false, showToastOnSuccess = false } = {}) {
+      const targetUrl = state.apiUrl || DEFAULT_SCRIPT_URL;
+      if (!silent) {
+        state.syncStatus = 'syncing';
+        updateSyncPillUI();
+      }
+
+      try {
+        const sep = targetUrl.includes('?') ? '&' : '?';
+        const url = `${targetUrl}${sep}action=getData&t=${Date.now()}`;
+        const res = await fetch(url, {
+          method: 'GET',
+          redirect: 'follow'
+        });
+
+        const text = await res.text();
+        let parsed;
+        try {
+          parsed = JSON.parse(text);
+        } catch (parseErr) {
+          if (text.trim().startsWith('<')) {
+            throw new Error('Google memulangkan halaman HTML/Login. Pastikan Deploy Web App ditetapkan kepada "Execute as: Me" dan "Who has access: Anyone".');
+          }
+          throw new Error('Respons daripada Apps Script bukan format JSON yang sah.');
+        }
+
+        // Sokong kedua-dua bentuk JSON: { ok: true, data: {...} } dan terus { Checklist: {...} }
+        let sheetPayload = null;
+        if (parsed && typeof parsed === 'object') {
+          if (parsed.ok === false) {
+            throw new Error(parsed.error || 'Apps Script memulangkan ralat.');
+          }
+          if (parsed.ok === true && parsed.data && parsed.data.Checklist) {
+            sheetPayload = parsed.data;
+          } else if (parsed.Checklist && parsed.Tetapan) {
+            sheetPayload = parsed;
+          }
+        }
+
+        if (!sheetPayload) {
+          throw new Error('Struktur data JSON tidak mengandungi tab Checklist / Tetapan.');
+        }
+
+        const newHash = JSON.stringify(sheetPayload);
+        const changed = newHash !== state.lastJsonHash;
+
+        state.data = sheetPayload;
+        saveCachedData();
+        state.syncStatus = 'live';
+        state.lastSyncTime = new Date();
+        state.lastSyncError = '';
+        updateSyncPillUI();
+
+        if (changed) {
+          updateConverterRateLabel();
+          renderAll();
+          if (silent) showToast('Dikemas kini dari Google Sheet 🔄');
+        }
+        if (showToastOnSuccess) {
+          showToast('Berjaya disegerak dengan Google Sheet! ✅');
+        }
+        return true;
+      } catch (err) {
+        state.syncStatus = 'error';
+        state.lastSyncError = err.message || 'Gagal menghubungi Google Apps Script.';
+        updateSyncPillUI();
+        if (!silent) {
+          showToast('Ralat Sync: Klik pil "Ralat Sync" di atas untuk butiran');
+        }
+        return false;
+      }
+    }
+
+    // Hantar perubahan (updateCell / saveRow / removeRow) melalui POST text/plain (elak CORS preflight)
+    async function postToSheet(payload, successToastMsg = 'Disimpan ke Sheet ✔') {
+      const targetUrl = state.apiUrl || DEFAULT_SCRIPT_URL;
+      state.pendingOps++;
+      updateSyncPillUI();
+
+      try {
+        const res = await fetch(targetUrl, {
+          method: 'POST',
+          redirect: 'follow',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const text = await res.text();
+        let json;
+        try {
+          json = JSON.parse(text);
+        } catch (parseErr) {
+          throw new Error('Respons POST bukan JSON sah. Semak tetapan Deploy Apps Script.');
+        }
+
+        if (json.ok === false) {
+          throw new Error(json.error || 'Gagal menyimpan ke Google Sheet.');
+        }
+
+        if (json.sheet && json.sheetData) {
+          state.data[json.sheet] = json.sheetData;
+          saveCachedData();
+          updateConverterRateLabel();
+          renderAll();
+        } else if (json.data && json.data.Checklist) {
+          state.data = json.data;
+          saveCachedData();
+          updateConverterRateLabel();
+          renderAll();
+        }
+
+        state.syncStatus = 'live';
+        state.lastSyncTime = new Date();
+        state.lastSyncError = '';
+        if (successToastMsg) showToast(successToastMsg);
+        return true;
+      } catch (err) {
+        state.syncStatus = 'error';
+        state.lastSyncError = err.message || 'Gagal menghantar kemas kini ke Google Sheet.';
+        showToast('Disimpan lokal, tetapi gagal sync ke Sheet ⚠️');
+        return false;
+      } finally {
+        state.pendingOps = Math.max(0, state.pendingOps - 1);
+        updateSyncPillUI();
+      }
+    }
+
+    // ==================== TEMA & PENGIRA KRW <-> RM ====================
     function initTheme() {
       const saved = localStorage.getItem(THEME_KEY);
       const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -492,9 +890,8 @@
       $('#theme-icon').textContent = isDark ? '☀️' : '🌙';
     }
 
-    // ==================== CURRENCY CONVERTER ====================
     function syncConverterFromKrw() {
-      const rate = Number(state.data.settings.kadar) || 0.003063;
+      const rate = getActiveRate();
       const krw = parseFloat($('#inp-krw').value);
       if (isNaN(krw)) {
         $('#inp-rm').value = '';
@@ -504,7 +901,7 @@
     }
 
     function syncConverterFromRm() {
-      const rate = Number(state.data.settings.kadar) || 0.003063;
+      const rate = getActiveRate();
       const rm = parseFloat($('#inp-rm').value);
       if (isNaN(rm) || rate <= 0) {
         $('#inp-krw').value = '';
@@ -514,73 +911,75 @@
     }
 
     function updateConverterRateLabel() {
-      const rate = Number(state.data.settings.kadar) || 0.003063;
+      const rate = getActiveRate();
       $('#conv-rate-label').textContent = `1 KRW = ${rate} RM`;
       syncConverterFromKrw();
     }
 
-    // ==================== RENDER: SUMMARY BANNER ====================
+    // ==================== PAPARAN KAD INFO UTAMA ====================
     function renderSummaryBanner() {
-      const s = state.data.settings;
-      const dep = parseISODate(s.tarikhBerlepas);
-      const ret = parseISODate(s.tarikhBalik);
+      const s = getSettingsMap();
+      const dep = parseDMY(s['Tarikh berlepas']);
+      const ret = parseDMY(s['Tarikh balik']);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
       let countdownHtml = '';
       if (dep) {
         const diffDays = Math.round((dep - today) / 86400000);
-        let badgeText = '';
-        if (diffDays > 0) badgeText = `🛫 ${diffDays} hari lagi`;
-        else if (diffDays === 0) badgeText = '🛫 Hari ini berlepas!';
-        else if (ret && today > ret) badgeText = '🎉 Trip dah selesai';
-        else badgeText = '✈️ Sedang bercuti di Korea!';
+        let badge = '';
+        if (diffDays > 0) badge = `🛫 ${diffDays} hari lagi`;
+        else if (diffDays === 0) badge = '🛫 Hari ni berlepas!';
+        else if (ret && today > ret) badge = '🎉 Trip dah selesai';
+        else badge = '✈️ Sedang bercuti di Korea!';
 
-        const dateRange = ret
-          ? `${formatDisplayDate(s.tarikhBerlepas)} – ${formatDisplayDate(s.tarikhBalik)}`
-          : formatDisplayDate(s.tarikhBerlepas);
+        const dateLabel = s['Tarikh balik']
+          ? `${s['Tarikh berlepas']} – ${s['Tarikh balik']}`
+          : s['Tarikh berlepas'];
 
         countdownHtml = `
           <div class="flex flex-wrap items-center gap-2">
-            <span class="text-base sm:text-lg font-extrabold bg-white text-brand-700 px-3 py-1 rounded-xl shadow-sm">${badgeText}</span>
-            <span class="text-xs sm:text-sm text-white/90 font-medium">📅 ${esc(dateRange)}</span>
+            <span class="text-base sm:text-lg font-extrabold bg-white text-brand-700 px-3 py-1 rounded-xl shadow-sm">${badge}</span>
+            <span class="text-xs sm:text-sm text-white/90 font-medium">📅 ${esc(dateLabel)}</span>
           </div>
         `;
       } else {
         countdownHtml = `
           <div class="flex flex-wrap items-center gap-2">
-            <span class="text-xs sm:text-sm font-medium text-white/90">📅 Tarikh berlepas belum ditetapkan</span>
-            <button type="button" onclick="switchTab('Tetapan')" class="text-xs font-semibold underline hover:text-white">
-              Tetapkan di ⚙️ Tetapan →
-            </button>
+            <span class="text-xs sm:text-sm text-white/90">📅 Tetapkan <strong>Tarikh berlepas</strong> di tab</span>
+            <button type="button" onclick="switchTab('Tetapan')" class="text-xs font-bold underline hover:text-white">⚙️ Tetapan →</button>
           </div>
         `;
       }
 
-      const rate = Number(s.kadar) || 0.003063;
-      const tenK = (rate * 10000).toFixed(2);
+      const rate = getActiveRate();
+      const liveAuto = s['Kadar auto (1 KRW = RM)'] !== '' && !isNaN(Number(s['Kadar auto (1 KRW = RM)']));
+      const flight = s['Penerbangan'] || '';
+      const hotel = s['Penginapan (nama & alamat)'] || '';
+      const hangul = s['Alamat dalam Hangul'] || '';
 
-      let extraRows = '';
-      if (s.penerbangan) {
-        extraRows += `<div class="text-xs sm:text-sm text-white/95"><span class="text-white/70 font-medium">✈️ Penerbangan:</span> ${esc(s.penerbangan)}</div>`;
+      let linesHtml = '';
+      if (flight) {
+        linesHtml += `<div class="text-xs sm:text-sm text-white/95"><span class="text-white/70 font-medium">✈️ Penerbangan:</span> ${linkify(flight)}</div>`;
       }
-      if (s.penginapan) {
-        extraRows += `<div class="text-xs sm:text-sm text-white/95"><span class="text-white/70 font-medium">🏨 Penginapan:</span> ${esc(s.penginapan)}</div>`;
+      if (hotel) {
+        linesHtml += `<div class="text-xs sm:text-sm text-white/95"><span class="text-white/70 font-medium">🏨 Penginapan:</span> ${linkify(hotel)}</div>`;
       }
-      if (s.alamatHangul) {
-        extraRows += `
-          <div class="flex flex-wrap items-center justify-between gap-2 pt-1.5 mt-1.5 border-t border-white/15">
+
+      if (hangul) {
+        linesHtml += `
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-2 mt-2 border-t border-white/15">
             <div class="text-xs sm:text-sm text-white">
               <span class="text-white/70 font-medium">🇰🇷 Alamat Hangul:</span>
-              <span class="font-semibold ml-1">${esc(s.alamatHangul)}</span>
+              <span class="font-semibold ml-1">${esc(hangul)}</span>
             </div>
             <div class="flex items-center gap-1.5">
               <button type="button" id="btn-copy-hangul"
-                class="text-xs font-semibold bg-white text-brand-700 hover:bg-slate-100 px-2.5 py-1.5 rounded-lg shadow-sm active:scale-95 transition">
-                📋 Salin Alamat Hangul
-              </button>
-              <button type="button" id="btn-show-taxi"
                 class="text-xs font-semibold bg-white/20 hover:bg-white/30 text-white px-2.5 py-1.5 rounded-lg border border-white/25 active:scale-95 transition">
+                📋 Salin
+              </button>
+              <button type="button" id="btn-taxi-modal"
+                class="text-xs font-bold bg-amber-300 hover:bg-amber-200 text-slate-900 px-3 py-1.5 rounded-lg shadow-sm active:scale-95 transition">
                 🚕 Skrin Besar Teksi
               </button>
             </div>
@@ -588,29 +987,24 @@
         `;
       }
 
-      $('#header-badge-members').textContent = `${state.data.members.length} Ahli`;
-
       $('#trip-summary-banner').innerHTML = `
         <div class="flex flex-wrap items-center justify-between gap-3">
           ${countdownHtml}
           <div class="text-xs sm:text-sm bg-black/20 px-3 py-1.5 rounded-xl border border-white/15">
-            ₩10,000 ≈ <strong class="font-bold text-amber-200">RM ${tenK}</strong>
+            ₩10,000 ≈ <strong class="font-bold text-amber-200">RM ${(rate * 10000).toFixed(2)}</strong>
+            <span class="text-[11px] text-white/70 ml-1">(${liveAuto ? 'kadar live' : 'manual'})</span>
           </div>
         </div>
-        ${extraRows ? `<div class="mt-3 space-y-1.5">${extraRows}</div>` : ''}
+        ${linesHtml ? `<div class="mt-2.5 space-y-1.5">${linesHtml}</div>` : ''}
       `;
 
       const copyBtn = $('#btn-copy-hangul');
-      if (copyBtn) {
-        copyBtn.onclick = () => copyTextToClipboard(s.alamatHangul, 'Alamat Hangul disalin untuk pemandu teksi! 🚕');
-      }
-      const taxiBtn = $('#btn-show-taxi');
-      if (taxiBtn) {
-        taxiBtn.onclick = () => openTaxiCardModal(s.alamatHangul, s.penginapan);
-      }
+      if (copyBtn) copyBtn.onclick = () => copyTextToClipboard(hangul, 'Alamat Hangul disalin! 🚕');
+      const taxiBtn = $('#btn-taxi-modal');
+      if (taxiBtn) taxiBtn.onclick = () => openTaxiCardModal(hangul, hotel);
     }
 
-    // ==================== RENDER: NAVIGATION TABS ====================
+    // ==================== PAPARAN TAB & AMARAN PASPORT ====================
     function renderTabs() {
       $('#nav-tabs').innerHTML = TABS.map((t) => {
         const active = t.id === state.activeTab;
@@ -626,18 +1020,13 @@
         `;
       }).join('');
 
-      // Kawal butang FAB mengikut tab
       const fab = $('#fab-add');
       if (state.activeTab === 'Tetapan') {
         fab.classList.add('hidden');
       } else {
         fab.classList.remove('hidden');
-        const labelMap = {
-          Checklist: 'Tambah Item',
-          Itinerary: 'Tambah Aktiviti',
-          Ahli: 'Tambah Ahli'
-        };
-        $('#fab-label').textContent = labelMap[state.activeTab] || 'Tambah';
+        const labels = { Checklist: 'Tambah Item', Itinerary: 'Tambah Aktiviti', Ahli: 'Tambah Ahli' };
+        $('#fab-label').textContent = labels[state.activeTab] || 'Tambah';
       }
     }
 
@@ -646,7 +1035,6 @@
       renderAll();
     }
 
-    // ==================== RENDER: PASSPORT WARNING BANNER ====================
     function renderPassportAlert() {
       const warnings = getPassportWarnings();
       if (!warnings.length) return '';
@@ -654,120 +1042,134 @@
         <div class="mb-4 flex items-start gap-3 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800/80 text-red-800 dark:text-red-200 rounded-2xl p-3.5 text-xs sm:text-sm animate-in">
           <span class="text-lg leading-none mt-0.5">⚠️</span>
           <div>
-            <p class="font-bold">Semakan Pasport Diperlukan: ${warnings.map(esc).join(', ')}</p>
-            <p class="text-red-700/90 dark:text-red-300/90 mt-0.5">Pasport disyorkan sah sekurang-kurangnya 6 bulan selepas tarikh balik dari Korea Selatan.</p>
+            <p class="font-bold">Semak pasport: ${warnings.map(esc).join(', ')}</p>
+            <p class="text-red-700/90 dark:text-red-300/90 mt-0.5">Disyorkan sah sekurang-kurangnya 6 bulan selepas tarikh balik.</p>
           </div>
         </div>
       `;
     }
 
-    // ==================== RENDER: TAB 1 — CHECKLIST ====================
+    // ==================== TAB 1: CHECKLIST ====================
     function renderChecklistTab() {
-      const members = state.data.members;
-      const items = state.data.checklist;
+      const d = state.data.Checklist;
+      if (!d) return '';
+
+      const iF = idx(d, 'Fasa');
+      const iK = idx(d, 'Kategori');
+      const iI = idx(d, 'Item');
+      const iA = idx(d, 'Anggaran / orang (RM)');
+      const iN = idx(d, 'Nota');
+      const members = getMembersList();
+
+      const phaseOf = (r) => (iF >= 0 && PHASES.includes(r.cells[iF])) ? r.cells[iF] : 'Before';
 
       // Pil penapis fasa (Before, During, After)
-      const phasePills = PHASES.map((phase) => {
-        const count = items.filter((it) => it.fasa === phase).length;
-        const active = phase === state.activePhase;
+      const pillsHtml = PHASES.map((p) => {
+        const count = d.rows.filter((r) => phaseOf(r) === p).length;
+        const active = p === state.activePhase;
         return `
-          <button type="button" data-phase="${phase}"
+          <button type="button" data-phase="${p}"
             class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition ${
               active
                 ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
                 : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
             }">
-            ${phase} <span class="ml-1 opacity-75">(${count})</span>
+            ${p} (${count})
           </button>
         `;
       }).join('');
 
-      const filtered = items.filter((it) => it.fasa === state.activePhase);
+      const rows = d.rows.filter((r) => phaseOf(r) === state.activePhase);
 
-      // Kad kemajuan individu setiap ahli
-      const progressCards = members.map((m) => {
-        const doneCount = filtered.filter((it) => (it.statusAhli?.[m.nama] || 'Belum') === 'Dah').length;
-        const total = filtered.length;
-        const pct = total ? Math.round((doneCount / total) * 100) : 0;
+      // Bar kemajuan individu untuk semua 6 ahli
+      const progressBarsHtml = members.map((m) => {
+        const colIdx = idx(d, m);
+        const done = colIdx >= 0 ? rows.filter((r) => r.cells[colIdx] === 'Dah').length : 0;
+        const pct = rows.length ? Math.round((done / rows.length) * 100) : 0;
         return `
           <div class="bg-slate-50 dark:bg-slate-800/70 rounded-xl p-2.5 border border-slate-200/70 dark:border-slate-700/70">
             <div class="flex items-center justify-between text-xs mb-1.5">
-              <span class="font-bold text-slate-800 dark:text-slate-100 truncate">${esc(m.nama)}</span>
-              <span class="font-semibold text-slate-500 dark:text-slate-400">${doneCount}/${total} (${pct}%)</span>
+              <span class="font-bold text-slate-800 dark:text-slate-100 truncate">${esc(m)}</span>
+              <span class="font-semibold text-slate-500 dark:text-slate-400">${done}/${rows.length}</span>
             </div>
             <div class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-              <div class="h-full bg-emerald-500 rounded-full transition-all duration-300" style="width: ${pct}%"></div>
+              <div class="h-full bg-emerald-500 rounded-full transition-all duration-300" style="width:${pct}%"></div>
             </div>
           </div>
         `;
       }).join('');
 
-      // Kira jumlah anggaran seorang & kumpulan
-      const totalPerPerson = filtered.reduce((acc, it) => acc + (Number(it.anggaran) || 0), 0);
-      const totalGroup = totalPerPerson * members.length;
+      const sumPerPerson = rows.reduce((sum, r) => sum + (iA >= 0 ? (Number(r.cells[iA]) || 0) : 0), 0);
+      const sumGroup = sumPerPerson * members.length;
 
       let tableHtml = '';
-      if (!filtered.length) {
+      if (!rows.length) {
         tableHtml = `
           <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-10 text-center">
-            <p class="text-slate-500 dark:text-slate-400 text-sm">Belum ada item untuk fasa <strong>${esc(state.activePhase)}</strong>.</p>
-            <button type="button" onclick="openChecklistModal()" class="mt-3 px-4 py-2 rounded-xl bg-brand-600 text-white text-xs sm:text-sm font-semibold hover:bg-brand-700 transition">
-              + Tambah Item Sekarang
-            </button>
+            <p class="text-slate-500 dark:text-slate-400 text-sm">Belum ada item dalam fasa <strong>${esc(state.activePhase)}</strong>. Tekan "+ Tambah Item" untuk mula.</p>
           </div>
         `;
       } else {
-        const memberHeaders = members.map((m) => `<th class="px-3 py-3 text-center text-xs font-bold uppercase tracking-wider whitespace-nowrap">${esc(m.nama)}</th>`).join('');
-        const rowsHtml = filtered.map((it) => {
-          const doneNum = members.filter((m) => (it.statusAhli?.[m.nama] || 'Belum') === 'Dah').length;
-          const allDone = members.length > 0 && doneNum === members.length;
+        const memHeaders = members.map((m) => `<th class="px-3 py-3 text-center text-xs font-bold uppercase tracking-wider whitespace-nowrap">${esc(m)}</th>`).join('');
+        const bodyRows = rows.map((r) => {
+          const doneCount = members.filter((m) => {
+            const c = idx(d, m);
+            return c >= 0 && r.cells[c] === 'Dah';
+          }).length;
+          const allDone = members.length > 0 && doneCount === members.length;
 
-          const memberCells = members.map((m) => {
-            const val = it.statusAhli?.[m.nama] || 'Belum';
+          const memCells = members.map((m) => {
+            const c = idx(d, m);
+            const val = c >= 0 ? (r.cells[c] || 'Belum') : 'Belum';
             const isDah = val === 'Dah';
             return `
               <td class="px-2.5 py-2.5 text-center whitespace-nowrap">
-                <select data-chk-id="${it.id}" data-member="${esc(m.nama)}"
-                  class="chk-inline-select text-xs font-semibold rounded-lg px-2 py-1.5 border cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500 transition ${
+                <select data-inline-chk data-row="${r.row}" data-header="${esc(m)}"
+                  class="text-xs font-semibold rounded-lg px-2 py-1.5 border cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500 transition ${
                     isDah
                       ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-700'
                       : 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
                   }">
-                  ${YN_OPTIONS.map((opt) => `<option value="${opt}" ${opt === val ? 'selected' : ''}>${opt}</option>`).join('')}
+                  ${YN_OPTIONS.map((o) => `<option value="${o}" ${o === val ? 'selected' : ''}>${o}</option>`).join('')}
                 </select>
               </td>
             `;
           }).join('');
 
+          const costVal = iA >= 0 ? r.cells[iA] : '';
+          const costDisplay = costVal !== '' && !isNaN(Number(costVal)) && Number(costVal) > 0
+            ? `RM ${fmtMoney(costVal)}`
+            : (costVal !== '' && !isNaN(Number(costVal)) && Number(costVal) === 0 ? 'RM 0.00' : '<span class="text-slate-400">–</span>');
+
           return `
             <tr class="border-b border-slate-100 dark:border-slate-800/80 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
               <td class="px-3.5 py-3 whitespace-nowrap">
                 <span class="inline-block text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-200 border border-brand-100 dark:border-brand-800">
-                  ${esc(it.kategori || 'Umum')}
+                  ${esc(iK >= 0 ? r.cells[iK] : '')}
                 </span>
               </td>
-              <td class="px-3.5 py-3 font-semibold text-slate-900 dark:text-white min-w-[170px]">
-                ${esc(it.item)}
+              <td class="px-3.5 py-3 font-semibold text-slate-900 dark:text-white min-w-[160px]">
+                ${esc(iI >= 0 ? r.cells[iI] : '')}
               </td>
               <td class="px-3.5 py-3 text-right font-semibold whitespace-nowrap text-slate-700 dark:text-slate-200">
-                ${Number(it.anggaran) > 0 ? `RM ${fmtMoney(it.anggaran)}` : '<span class="text-slate-400">–</span>'}
+                ${costDisplay}
               </td>
-              ${memberCells}
-              <td class="px-3 py-3 text-center whitespace-nowrap">
+              ${memCells}
+              <td class="px-3.5 py-3 text-center whitespace-nowrap">
                 <span class="inline-block text-xs font-bold px-2.5 py-1 rounded-full ${
                   allDone
                     ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300'
                     : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
                 }">
-                  ${doneNum}/${members.length}
+                  ${doneCount}/${members.length}
                 </span>
               </td>
               <td class="px-3.5 py-3 text-xs text-slate-600 dark:text-slate-400 min-w-[180px]">
-                ${linkify(it.nota || '')}
+                ${linkify(iN >= 0 ? r.cells[iN] : '')}
               </td>
               <td class="px-3.5 py-3 text-right whitespace-nowrap">
-                <button type="button" data-edit-chk="${it.id}" class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Edit">✏️</button>
-                <button type="button" data-del-chk="${it.id}" class="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-950 transition" title="Padam">🗑️</button>
+                <button type="button" data-act="edit" data-sheet="Checklist" data-row="${r.row}" class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Edit">✏️</button>
+                <button type="button" data-act="del" data-sheet="Checklist" data-row="${r.row}" class="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-950 transition" title="Padam">🗑️</button>
               </td>
             </tr>
           `;
@@ -781,16 +1183,14 @@
                   <tr class="bg-brand-600 dark:bg-slate-800 text-white">
                     <th class="px-3.5 py-3 text-xs font-bold uppercase tracking-wider whitespace-nowrap">Kategori</th>
                     <th class="px-3.5 py-3 text-xs font-bold uppercase tracking-wider whitespace-nowrap">Item</th>
-                    <th class="px-3.5 py-3 text-right text-xs font-bold uppercase tracking-wider whitespace-nowrap">Anggaran / org</th>
-                    ${memberHeaders}
-                    <th class="px-3 py-3 text-center text-xs font-bold uppercase tracking-wider whitespace-nowrap">Siap</th>
+                    <th class="px-3.5 py-3 text-right text-xs font-bold uppercase tracking-wider whitespace-nowrap">Anggaran / orang (RM)</th>
+                    ${memHeaders}
+                    <th class="px-3.5 py-3 text-center text-xs font-bold uppercase tracking-wider whitespace-nowrap">Siap</th>
                     <th class="px-3.5 py-3 text-xs font-bold uppercase tracking-wider whitespace-nowrap">Nota</th>
                     <th class="px-3.5 py-3 text-right text-xs font-bold uppercase tracking-wider whitespace-nowrap">Tindakan</th>
                   </tr>
                 </thead>
-                <tbody>
-                  ${rowsHtml}
-                </tbody>
+                <tbody>${bodyRows}</tbody>
               </table>
             </div>
           </div>
@@ -800,45 +1200,40 @@
       return `
         <div class="animate-in space-y-4">
           ${renderPassportAlert()}
-
-          <!-- Filter Fasa -->
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-2">${phasePills}</div>
-            <span class="text-xs text-slate-500 dark:text-slate-400">Tukar status <strong>Belum / Dah</strong> terus dalam jadual</span>
+            <div class="flex items-center gap-2">${pillsHtml}</div>
+            <span class="text-xs text-slate-500 dark:text-slate-400">Tukar <strong>Dah / Belum</strong> terus dalam jadual</span>
           </div>
 
-          <!-- Progress Bar Individu 6 Ahli -->
-          ${filtered.length ? `
+          ${rows.length ? `
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
               <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
-                Kemajuan Persediaan Ahli (${esc(state.activePhase)})
+                Kemajuan Ahli (${esc(state.activePhase)})
               </h3>
               <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-                ${progressCards}
+                ${progressBarsHtml}
               </div>
             </div>
           ` : ''}
 
-          <!-- Jadual Checklist -->
           ${tableHtml}
 
-          <!-- Kad Ringkasan Bajet Checklist -->
-          ${filtered.length ? `
+          ${rows.length ? `
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Jumlah Anggaran Fasa ${esc(state.activePhase)} (Seorang)
+                  Jumlah Anggaran ${esc(state.activePhase)} (Seorang)
                 </p>
                 <p class="text-xl sm:text-2xl font-extrabold text-brand-600 dark:text-brand-400 mt-0.5">
-                  RM ${fmtMoney(totalPerPerson)}
+                  RM ${fmtMoney(sumPerPerson)}
                 </p>
               </div>
               <div class="sm:text-right border-t sm:border-t-0 pt-2.5 sm:pt-0 border-slate-100 dark:border-slate-800">
                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Anggaran Keseluruhan Kumpulan (${members.length} Orang)
+                  Anggaran Kumpulan (${members.length} Orang)
                 </p>
                 <p class="text-lg sm:text-xl font-bold text-slate-800 dark:text-slate-100 mt-0.5">
-                  RM ${fmtMoney(totalGroup)}
+                  RM ${fmtMoney(sumGroup)}
                 </p>
               </div>
             </div>
@@ -847,108 +1242,133 @@
       `;
     }
 
-    // ==================== RENDER: TAB 2 — ITINERARY ====================
+    // ==================== TAB 2: ITINERARY ====================
     function renderItineraryTab() {
-      const rate = Number(state.data.settings.kadar) || 0.003063;
-      const list = [...state.data.itinerary].sort((a, b) => {
-        const ha = a.hari === '' || a.hari === null ? 9999 : Number(a.hari);
-        const hb = b.hari === '' || b.hari === null ? 9999 : Number(b.hari);
-        return ha - hb || String(a.masa || '').localeCompare(String(b.masa || ''));
-      });
+      const d = state.data.Itinerary;
+      if (!d) return '';
 
-      if (!list.length) {
+      const rate = getActiveRate();
+      const iH = idx(d, 'Hari');
+      const iT = idx(d, 'Tarikh');
+      const iM = idx(d, 'Masa');
+      const iAkt = idx(d, 'Aktiviti');
+      const iLok = idx(d, 'Lokasi');
+      const iBan = idx(d, 'Bandar');
+      const iTr = idx(d, 'Pengangkutan');
+      const iKrw = idx(d, 'Anggaran (KRW)');
+      const iRm = idx(d, 'Setara (RM)');
+      const iTmp = idxAny(d, ['Tempahan / Link', 'Tempahan']);
+      const iSt = idx(d, 'Status');
+      const iNot = idx(d, 'Nota');
+
+      if (!d.rows.length) {
         return `
           <div class="animate-in">
             ${renderPassportAlert()}
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-10 text-center">
-              <p class="text-slate-500 dark:text-slate-400 text-sm">Jadual perjalanan (Itinerary) masih kosong.</p>
-              <button type="button" onclick="openItineraryModal()" class="mt-3 px-4 py-2 rounded-xl bg-brand-600 text-white text-xs sm:text-sm font-semibold hover:bg-brand-700 transition">
-                + Tambah Aktiviti Pertama
-              </button>
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-10 text-center space-y-3">
+              <div class="text-4xl">🗓️</div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Belum ada aktiviti dalam Itinerary</h3>
+              <p class="text-slate-500 dark:text-slate-400 text-sm max-w-md mx-auto">
+                Tekan butang <strong>"+ Tambah Aktiviti"</strong> di penjuru bawah kanan untuk mula menyusun jadual perjalanan anda.
+              </p>
             </div>
           </div>
         `;
       }
 
-      // Kumpulkan mengikut Hari
-      const groups = [];
-      list.forEach((item) => {
-        const key = item.hari === '' || item.hari === null ? 'Belum Ditetapkan' : String(item.hari);
-        let grp = groups.find((g) => g.key === key);
-        if (!grp) {
-          grp = { key, items: [] };
-          groups.push(grp);
-        }
-        grp.items.push(item);
+      const sorted = [...d.rows].sort((a, b) => {
+        const ha = iH >= 0 && a.cells[iH] !== '' ? Number(a.cells[iH]) : 1e9;
+        const hb = iH >= 0 && b.cells[iH] !== '' ? Number(b.cells[iH]) : 1e9;
+        const ma = iM >= 0 ? String(a.cells[iM]) : '';
+        const mb = iM >= 0 ? String(b.cells[iM]) : '';
+        return ha - hb || ma.localeCompare(mb) || a.row - b.row;
       });
 
-      const grandKrw = list.reduce((sum, it) => sum + (Number(it.anggaranKrw) || 0), 0);
+      const groups = [];
+      sorted.forEach((r) => {
+        const k = iH >= 0 ? String(r.cells[iH]).trim() : '';
+        let g = groups.find((x) => x.k === k);
+        if (!g) {
+          g = { k, rows: [] };
+          groups.push(g);
+        }
+        g.rows.push(r);
+      });
+
+      const grandKrw = sorted.reduce((s, r) => s + (iKrw >= 0 ? (Number(r.cells[iKrw]) || 0) : 0), 0);
       const grandRm = grandKrw * rate;
 
-      const dayCardsHtml = groups.map((g) => {
-        const dayKrw = g.items.reduce((sum, it) => sum + (Number(it.anggaranKrw) || 0), 0);
+      const dayCards = groups.map((g) => {
+        const dayKrw = g.rows.reduce((s, r) => s + (iKrw >= 0 ? (Number(r.cells[iKrw]) || 0) : 0), 0);
         const dayRm = dayKrw * rate;
-        const firstDate = g.items.map((it) => it.tarikh).find(Boolean);
-        const dayTitle = g.key === 'Belum Ditetapkan' ? 'Hari Belum Ditetapkan' : `Hari ${esc(g.key)}`;
+        const firstDate = iT >= 0 ? g.rows.map((r) => r.cells[iT]).find(Boolean) : '';
+        const title = g.k === '' ? 'Belum ditetapkan' : `Hari ${esc(g.k)}`;
 
-        const rowsHtml = g.items.map((it) => {
-          const krw = Number(it.anggaranKrw) || 0;
-          const rm = krw * rate;
-          const q = encodeURIComponent([it.lokasi, it.bandar, 'Korea'].filter(Boolean).join(' '));
-          const stClass =
-            it.status === 'Siap'
-              ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-700'
-              : it.status === 'Dalam proses'
-              ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-700'
-              : 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
+        const rowsHtml = g.rows.map((r) => {
+          const krwVal = iKrw >= 0 ? r.cells[iKrw] : '';
+          const krwNum = Number(krwVal) || 0;
+          const sheetRm = iRm >= 0 ? r.cells[iRm] : '';
+          const rmNum = sheetRm !== '' && !isNaN(Number(sheetRm)) && Number(sheetRm) > 0
+            ? Number(sheetRm)
+            : krwNum * rate;
+
+          const lok = iLok >= 0 ? r.cells[iLok] : '';
+          const ban = iBan >= 0 ? r.cells[iBan] : '';
+          const q = encodeURIComponent([lok, ban, 'Korea'].filter(Boolean).join(' '));
+
+          const st = iSt >= 0 ? (r.cells[iSt] || 'Belum') : 'Belum';
+          const stClass = st === 'Siap'
+            ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-700'
+            : st === 'Dalam proses'
+            ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-700'
+            : 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
+
+          const tmp = iTmp >= 0 ? r.cells[iTmp] : '';
+          const not = iNot >= 0 ? r.cells[iNot] : '';
 
           return `
             <tr class="border-b border-slate-100 dark:border-slate-800/80 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
               <td class="px-3.5 py-3 font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap">
-                ${esc(it.masa || '–')}
+                ${esc(iM >= 0 && r.cells[iM] ? r.cells[iM] : '–')}
               </td>
-              <td class="px-3.5 py-3 min-w-[200px]">
-                <div class="font-semibold text-slate-900 dark:text-white">${esc(it.aktiviti)}</div>
-                ${it.pengangkutan ? `<div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">🚆 ${esc(it.pengangkutan)}</div>` : ''}
+              <td class="px-3.5 py-3 min-w-[190px]">
+                <div class="font-semibold text-slate-900 dark:text-white">${esc(iAkt >= 0 ? r.cells[iAkt] : '')}</div>
+                ${iTr >= 0 && r.cells[iTr] ? `<div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">🚆 ${esc(r.cells[iTr])}</div>` : ''}
               </td>
-              <td class="px-3.5 py-3 min-w-[180px]">
-                ${it.lokasi ? `
-                  <div class="font-medium text-slate-800 dark:text-slate-200">${esc(it.lokasi)}</div>
+              <td class="px-3.5 py-3 min-w-[175px]">
+                ${lok ? `
+                  <div class="font-medium text-slate-800 dark:text-slate-200">${esc(lok)}</div>
                   <div class="flex items-center gap-2 text-xs mt-1">
                     <a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener noreferrer"
-                      class="inline-flex items-center gap-0.5 text-blue-600 dark:text-blue-400 hover:underline font-medium">
-                      📍 Google Maps
-                    </a>
-                    <span class="text-slate-300 dark:text-slate-700">•</span>
+                      class="text-blue-600 dark:text-blue-400 hover:underline font-medium">📍 Google</a>
+                    <span class="text-slate-300 dark:text-slate-700">·</span>
                     <a href="https://map.naver.com/p/search/${q}" target="_blank" rel="noopener noreferrer"
-                      class="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400 hover:underline font-medium">
-                      Naver Map
-                    </a>
+                      class="text-emerald-600 dark:text-emerald-400 hover:underline font-medium">Naver</a>
                   </div>
                 ` : '<span class="text-slate-400">–</span>'}
               </td>
               <td class="px-3.5 py-3 text-xs font-medium text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                ${esc(it.bandar || '–')}
+                ${esc(ban || '–')}
               </td>
               <td class="px-3.5 py-3 text-right font-semibold whitespace-nowrap text-slate-800 dark:text-slate-200">
-                ${krw > 0 ? `₩${fmtInt(krw)}` : '<span class="text-slate-400">–</span>'}
+                ${krwNum > 0 ? `₩${fmtInt(krwNum)}` : '<span class="text-slate-400">–</span>'}
               </td>
               <td class="px-3.5 py-3 text-right font-semibold whitespace-nowrap text-emerald-700 dark:text-emerald-400">
-                ${krw > 0 ? `RM ${fmtMoney(rm)}` : '<span class="text-slate-400">–</span>'}
+                ${krwNum > 0 ? `RM ${fmtMoney(rmNum)}` : '<span class="text-slate-400">–</span>'}
               </td>
               <td class="px-3.5 py-3 text-center whitespace-nowrap">
-                <select data-itin-id="${it.id}"
-                  class="itin-status-select text-xs font-semibold rounded-lg px-2.5 py-1.5 border cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500 ${stClass}">
-                  ${STATUS_OPTIONS.map((opt) => `<option value="${opt}" ${opt === (it.status || 'Belum') ? 'selected' : ''}>${opt}</option>`).join('')}
+                <select data-inline-itin data-row="${r.row}" data-header="Status"
+                  class="text-xs font-semibold rounded-lg px-2.5 py-1.5 border cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500 ${stClass}">
+                  ${STATUS_OPTIONS.map((o) => `<option value="${o}" ${o === st ? 'selected' : ''}>${o}</option>`).join('')}
                 </select>
               </td>
-              <td class="px-3.5 py-3 text-xs text-slate-600 dark:text-slate-400 min-w-[180px]">
-                ${it.tempahan ? `<div class="mb-1">${linkify(it.tempahan)}</div>` : ''}
-                ${linkify(it.nota || '')}
+              <td class="px-3.5 py-3 text-xs text-slate-600 dark:text-slate-400 min-w-[170px]">
+                ${tmp ? `<div class="mb-0.5">${linkify(tmp)}</div>` : ''}
+                ${linkify(not)}
               </td>
               <td class="px-3.5 py-3 text-right whitespace-nowrap">
-                <button type="button" data-edit-itin="${it.id}" class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Edit">✏️</button>
-                <button type="button" data-del-itin="${it.id}" class="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-950 transition" title="Padam">🗑️</button>
+                <button type="button" data-act="edit" data-sheet="Itinerary" data-row="${r.row}" class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Edit">✏️</button>
+                <button type="button" data-act="del" data-sheet="Itinerary" data-row="${r.row}" class="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-950 transition" title="Padam">🗑️</button>
               </td>
             </tr>
           `;
@@ -956,26 +1376,24 @@
 
         return `
           <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
-            <!-- Header Hari -->
             <div class="bg-slate-100/90 dark:bg-slate-800/90 px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2">
               <div class="flex items-center gap-2.5">
-                <span class="px-3 py-1 rounded-lg bg-brand-600 text-white text-xs sm:text-sm font-bold">${dayTitle}</span>
-                ${firstDate ? `<span class="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300">📅 ${esc(formatDisplayDate(firstDate))}</span>` : ''}
+                <span class="px-3 py-1 rounded-lg bg-brand-600 text-white text-xs sm:text-sm font-bold">${title}</span>
+                ${firstDate ? `<span class="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300">📅 ${esc(firstDate)}</span>` : ''}
               </div>
               <div class="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200">
-                Jumlah Hari Ini: <span class="text-brand-600 dark:text-brand-400">₩${fmtInt(dayKrw)}</span>
+                Jumlah: <span class="text-brand-600 dark:text-brand-400">₩${fmtInt(dayKrw)}</span>
                 <span class="text-slate-400 mx-1">≈</span>
                 <span class="text-emerald-600 dark:text-emerald-400">RM ${fmtMoney(dayRm)}</span>
               </div>
             </div>
-
             <div class="overflow-x-auto thin-scroll">
               <table class="w-full text-left border-collapse text-sm">
                 <thead>
                   <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-900">
                     <th class="px-3.5 py-2.5 text-xs font-bold uppercase tracking-wider">Masa</th>
                     <th class="px-3.5 py-2.5 text-xs font-bold uppercase tracking-wider">Aktiviti</th>
-                    <th class="px-3.5 py-2.5 text-xs font-bold uppercase tracking-wider">Lokasi & Peta</th>
+                    <th class="px-3.5 py-2.5 text-xs font-bold uppercase tracking-wider">Lokasi</th>
                     <th class="px-3.5 py-2.5 text-xs font-bold uppercase tracking-wider">Bandar</th>
                     <th class="px-3.5 py-2.5 text-right text-xs font-bold uppercase tracking-wider">Anggaran (KRW)</th>
                     <th class="px-3.5 py-2.5 text-right text-xs font-bold uppercase tracking-wider">Setara (RM)</th>
@@ -984,9 +1402,7 @@
                     <th class="px-3.5 py-2.5 text-right text-xs font-bold uppercase tracking-wider">Tindakan</th>
                   </tr>
                 </thead>
-                <tbody>
-                  ${rowsHtml}
-                </tbody>
+                <tbody>${rowsHtml}</tbody>
               </table>
             </div>
           </div>
@@ -996,219 +1412,244 @@
       return `
         <div class="animate-in space-y-4">
           ${renderPassportAlert()}
-          ${dayCardsHtml}
-
-          <!-- Ringkasan Jumlah Bajet Itinerary -->
+          ${dayCards}
           <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Jumlah Anggaran Aktiviti Keseluruhan (KRW)
-              </p>
-              <p class="text-xl sm:text-2xl font-extrabold text-brand-600 dark:text-brand-400 mt-0.5">
-                ₩${fmtInt(grandKrw)}
-              </p>
+              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Jumlah Anggaran Itinerary (KRW)</p>
+              <p class="text-xl sm:text-2xl font-extrabold text-brand-600 dark:text-brand-400 mt-0.5">₩${fmtInt(grandKrw)}</p>
             </div>
             <div class="sm:text-right border-t sm:border-t-0 pt-2.5 sm:pt-0 border-slate-100 dark:border-slate-800">
-              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Setara Dalam Ringgit Malaysia (Kadar ${rate})
-              </p>
-              <p class="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
-                RM ${fmtMoney(grandRm)}
-              </p>
+              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Setara dalam RM (Kadar ${rate})</p>
+              <p class="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">RM ${fmtMoney(grandRm)}</p>
             </div>
           </div>
         </div>
       `;
     }
 
-    // ==================== RENDER: TAB 3 — AHLI ====================
+    // ==================== TAB 3: AHLI ====================
     function renderAhliTab() {
-      const members = state.data.members;
+      const d = state.data.Ahli;
+      if (!d) return '';
 
-      const cardsHtml = members.map((m, idx) => {
-        const passStatus = getPassportStatus(m.tarikhLuput);
+      const iNama = idx(d, 'Nama');
+      const iTel = idxAny(d, ['No. Telefon', 'Telefon']);
+      const iPas = idx(d, 'No. Pasport');
+      const iLup = idx(d, 'Tarikh Luput Pasport');
+      const iWar = idxAny(d, ['Waris Kecemasan', 'Nama Waris', 'Waris']);
+      const iNoW = idx(d, 'No. Waris');
+      const iAla = idxAny(d, ['Alahan / Nota Kesihatan', 'Alahan']);
+
+      const rowsHtml = d.rows.map((r) => {
+        const nama = iNama >= 0 ? r.cells[iNama] : '';
+        const tel = iTel >= 0 ? r.cells[iTel] : '';
+        const pas = iPas >= 0 ? r.cells[iPas] : '';
+        const lup = iLup >= 0 ? r.cells[iLup] : '';
+        const war = iWar >= 0 ? r.cells[iWar] : '';
+        const noW = iNoW >= 0 ? r.cells[iNoW] : '';
+        const ala = iAla >= 0 ? r.cells[iAla] : '';
+        const passBadge = getPassportStatus(lup);
+
         return `
-          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-            <div>
-              <div class="flex items-start justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div class="flex items-center gap-2.5">
-                  <div class="w-9 h-9 rounded-full bg-brand-600 text-white font-bold flex items-center justify-center text-sm shrink-0">
-                    ${esc(m.nama.charAt(0).toUpperCase())}
-                  </div>
-                  <div>
-                    <h3 class="font-bold text-base text-slate-900 dark:text-white">${esc(m.nama)}</h3>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Ahli #${idx + 1}</p>
-                  </div>
-                </div>
-                <div class="flex items-center gap-1">
-                  <button type="button" data-edit-member="${m.id}" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Edit Ahli">✏️</button>
-                  <button type="button" data-del-member="${m.id}" class="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition" title="Padam Ahli">🗑️</button>
-                </div>
+          <tr class="border-b border-slate-100 dark:border-slate-800/80 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
+            <td class="px-4 py-3.5 whitespace-nowrap">
+              <div class="flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-full bg-brand-600 text-white text-xs font-bold flex items-center justify-center shrink-0">
+                  ${esc((nama || '?').charAt(0).toUpperCase())}
+                </span>
+                <span class="font-bold text-slate-900 dark:text-white">${esc(nama)}</span>
               </div>
-
-              <div class="mt-3 space-y-2 text-xs sm:text-sm">
-                <div class="flex justify-between gap-2">
-                  <span class="text-slate-500 dark:text-slate-400">📱 No. Telefon:</span>
-                  <span class="font-medium text-slate-800 dark:text-slate-200">${esc(m.telefon || '–')}</span>
-                </div>
-                <div class="flex justify-between gap-2">
-                  <span class="text-slate-500 dark:text-slate-400">🛂 No. Pasport:</span>
-                  <span class="font-mono font-semibold text-slate-800 dark:text-slate-200">${esc(m.noPasport || '–')}</span>
-                </div>
-                <div class="flex items-center justify-between gap-2">
-                  <span class="text-slate-500 dark:text-slate-400">📅 Luput Pasport:</span>
-                  <div class="flex items-center gap-1.5">
-                    <span class="font-medium text-slate-800 dark:text-slate-200">${m.tarikhLuput ? esc(formatDisplayDate(m.tarikhLuput)) : ''}</span>
-                    ${passStatus.html}
-                  </div>
-                </div>
-                <div class="flex justify-between gap-2 pt-1.5 border-t border-slate-100 dark:border-slate-800/80">
-                  <span class="text-slate-500 dark:text-slate-400">🆘 Waris:</span>
-                  <span class="font-medium text-slate-800 dark:text-slate-200 text-right">
-                    ${m.waris ? `${esc(m.waris)}${m.noWaris ? ` (${esc(m.noWaris)})` : ''}` : '–'}
-                  </span>
-                </div>
-                ${m.alahan ? `
-                  <div class="mt-2 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 text-xs text-amber-900 dark:text-amber-200">
-                    <strong>🩺 Alahan / Nota:</strong> ${esc(m.alahan)}
-                  </div>
-                ` : ''}
+            </td>
+            <td class="px-4 py-3.5 whitespace-nowrap text-slate-700 dark:text-slate-300">
+              ${tel ? `<a href="tel:${esc(tel)}" class="hover:underline font-medium">${esc(tel)}</a>` : '<span class="text-slate-400">–</span>'}
+            </td>
+            <td class="px-4 py-3.5 whitespace-nowrap font-mono font-semibold text-slate-800 dark:text-slate-200">
+              ${esc(pas || '–')}
+            </td>
+            <td class="px-4 py-3.5 whitespace-nowrap">
+              <div class="flex items-center gap-2">
+                ${lup ? `<span class="text-slate-800 dark:text-slate-200 font-medium">${esc(lup)}</span>` : ''}
+                ${passBadge.html}
               </div>
-            </div>
-
-            <button type="button" data-edit-member="${m.id}"
-              class="mt-4 w-full py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition">
-              Kemaskini Maklumat ${esc(m.nama)}
-            </button>
-          </div>
+            </td>
+            <td class="px-4 py-3.5 whitespace-nowrap text-slate-700 dark:text-slate-300">
+              ${war || noW ? `${esc(war)}${noW ? ` <span class="text-xs text-slate-500">(${esc(noW)})</span>` : ''}` : '<span class="text-slate-400">–</span>'}
+            </td>
+            <td class="px-4 py-3.5 text-xs text-slate-600 dark:text-slate-400 min-w-[180px]">
+              ${ala ? `<span class="inline-block px-2 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-200 border border-amber-200/70 dark:border-amber-800/60">${esc(ala)}</span>` : '<span class="text-slate-400">–</span>'}
+            </td>
+            <td class="px-4 py-3.5 text-right whitespace-nowrap">
+              <button type="button" data-act="edit" data-sheet="Ahli" data-row="${r.row}" class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Edit">✏️</button>
+              <button type="button" data-act="del" data-sheet="Ahli" data-row="${r.row}" class="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-950 transition" title="Padam">🗑️</button>
+            </td>
+          </tr>
         `;
       }).join('');
 
       return `
         <div class="animate-in space-y-4">
           ${renderPassportAlert()}
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            ${cardsHtml}
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+            <div class="overflow-x-auto thin-scroll">
+              <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr class="bg-brand-600 dark:bg-slate-800 text-white">
+                    <th class="px-4 py-3 text-xs font-bold uppercase tracking-wider whitespace-nowrap">Nama</th>
+                    <th class="px-4 py-3 text-xs font-bold uppercase tracking-wider whitespace-nowrap">No. Telefon</th>
+                    <th class="px-4 py-3 text-xs font-bold uppercase tracking-wider whitespace-nowrap">No. Pasport</th>
+                    <th class="px-4 py-3 text-xs font-bold uppercase tracking-wider whitespace-nowrap">Tarikh Luput Pasport</th>
+                    <th class="px-4 py-3 text-xs font-bold uppercase tracking-wider whitespace-nowrap">Waris Kecemasan</th>
+                    <th class="px-4 py-3 text-xs font-bold uppercase tracking-wider whitespace-nowrap">Alahan / Nota Kesihatan</th>
+                    <th class="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider whitespace-nowrap">Tindakan</th>
+                  </tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+              </table>
+            </div>
           </div>
         </div>
       `;
     }
 
-    // ==================== RENDER: TAB 4 — TETAPAN ====================
+    // ==================== TAB 4: TETAPAN ====================
     function renderTetapanTab() {
-      const s = state.data.settings;
+      const d = state.data.Tetapan;
+      const iK = idx(d, 'Kunci');
+      const iV = idx(d, 'Nilai');
+      const iN = idx(d, 'Nota');
+
+      const statusBadge = state.syncStatus === 'error'
+        ? '<span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300">● Ralat Sambungan</span>'
+        : state.syncStatus === 'live'
+        ? '<span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">● Bersambung ke Google Sheet</span>'
+        : '<span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300">● Menyambung…</span>';
+
+      const settingsRowsHtml = d ? d.rows.map((r) => {
+        const k = iK >= 0 ? r.cells[iK] : '';
+        const v = iV >= 0 ? r.cells[iV] : '';
+        const n = iN >= 0 ? r.cells[iN] : '';
+        const lockedBySheet = Array.isArray(r.f) && r.f.includes(iV);
+        const shown = /^Kadar/.test(k) && v !== '' && !isNaN(Number(v)) ? Number(v).toFixed(6) : v;
+
+        return `
+          <div class="flex items-start justify-between gap-3 py-3.5 border-b border-slate-100 dark:border-slate-800 last:border-b-0">
+            <div class="min-w-0 flex-1">
+              <div class="font-bold text-sm text-slate-900 dark:text-white">${esc(k)}</div>
+              <div class="text-sm text-slate-700 dark:text-slate-200 mt-0.5 whitespace-pre-wrap break-words">
+                ${shown === '' ? '<span class="text-xs italic text-slate-400">(belum diisi)</span>' : linkify(shown)}
+              </div>
+              ${n ? `<div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${esc(n)}</div>` : ''}
+            </div>
+            <div class="shrink-0">
+              ${lockedBySheet
+                ? '<span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500">🔒 auto</span>'
+                : `<button type="button" data-act="edit" data-sheet="Tetapan" data-row="${r.row}"
+                    class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-brand-600 hover:text-white dark:bg-slate-800 dark:hover:bg-brand-500 transition">
+                    ✏️ Edit
+                  </button>`
+              }
+            </div>
+          </div>
+        `;
+      }).join('') : '';
+
       return `
-        <div class="animate-in space-y-5 max-w-3xl mx-auto">
-          <!-- Borang Tetapan Utama Trip -->
-          <form id="form-tetapan" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-            <div class="border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">⚙️ Tetapan Umum Percutian</h2>
-              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Kemas kini tarikh, kadar tukaran KRW, maklumat penerbangan, dan alamat Hangul.</p>
-            </div>
+        <div class="animate-in space-y-5 max-w-4xl mx-auto">
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Kadar Tukaran (1 KRW = RM)</label>
-                <input id="set-kadar" type="number" step="any" required value="${esc(s.kadar)}"
-                  class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500" />
-                <p class="text-[11px] text-slate-400 mt-1">Asal: 0.003063</p>
-              </div>
-              <div>
-                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Tarikh Berlepas</label>
-                <input id="set-berlepas" type="date" value="${esc(s.tarikhBerlepas)}"
-                  class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
-              </div>
-              <div>
-                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Tarikh Balik</label>
-                <input id="set-balik" type="date" value="${esc(s.tarikhBalik)}"
-                  class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">✈️ Maklumat Penerbangan</label>
-              <textarea id="set-penerbangan" rows="2" placeholder="Contoh: AirAsia X D7 506 · KUL 01:00 → ICN 08:20 (No. Tempahan: ABC123)"
-                class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">${esc(s.penerbangan)}</textarea>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">🏨 Penginapan (Nama & Alamat Inggeris)</label>
-              <textarea id="set-penginapan" rows="2" placeholder="Contoh: Myeongdong Stay Guesthouse, 12-3 Chungmuro 2-ga, Jung-gu, Seoul"
-                class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">${esc(s.penginapan)}</textarea>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">🇰🇷 Alamat dalam Hangul (Untuk Pemandu Teksi Korea)</label>
-              <textarea id="set-hangul" rows="2" placeholder="Contoh: 서울특별시 중구 충무로2가 12-3"
-                class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">${esc(s.alamatHangul)}</textarea>
-            </div>
-
-            <div class="flex justify-end pt-2">
-              <button type="submit"
-                class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold shadow-sm active:scale-95 transition">
-                💾 Simpan Tetapan
-              </button>
-            </div>
-          </form>
-
-          <!-- Seksyen Sandaran (Backup), Kongsi & Reset -->
+          <!-- KARTU 1: SAMBUNGAN GOOGLE APPS SCRIPT (AUTO-CONNECT) -->
           <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-            <div class="border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">🔄 Sandaran & Perkongsian Data Kumpulan</h2>
-              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Eksport fail JSON untuk dikongsi dalam grup WhatsApp supaya ahli lain boleh import kemas kini terkini, atau eksport CSV untuk dibuka dalam Excel / Google Sheets.
-              </p>
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div>
+                <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">🔗 Sambungan Google Sheet (Auto-Connect)</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  URL Web App (<code class="font-mono text-brand-600 dark:text-brand-400">/exec</code>) anda sudah ditanam sebagai lalai supaya semua ahli terus bersambung secara automatik.
+                </p>
+              </div>
+              ${statusBadge}
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button type="button" id="btn-export-json"
-                class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm font-semibold transition">
-                <span>📤</span>
-                <span>Export Data (JSON)</span>
-              </button>
+            ${state.lastSyncError ? `
+              <div class="p-3 rounded-xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 text-xs text-red-800 dark:text-red-200">
+                <strong>Butiran Ralat Terakhir:</strong> ${esc(state.lastSyncError)}
+              </div>
+            ` : ''}
 
-              <label class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm font-semibold cursor-pointer transition">
-                <span>📥</span>
-                <span>Import Data (JSON)</span>
+            <div class="space-y-2">
+              <label for="inp-api-url" class="block text-xs font-semibold text-slate-600 dark:text-slate-300">
+                URL Web App Google Apps Script (<code class="font-mono">/exec</code>)
+              </label>
+              <input id="inp-api-url" type="url" value="${esc(state.apiUrl)}"
+                placeholder="https://script.google.com/macros/s/.../exec"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs sm:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-500" />
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2.5">
+              <button type="button" id="btn-save-test-api"
+                class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs sm:text-sm font-semibold shadow-sm active:scale-95 transition">
+                💾 Simpan & Uji Sambung
+              </button>
+              <button type="button" id="btn-reset-default-url"
+                class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm active:scale-95 transition">
+                🔄 Guna URL Lalai
+              </button>
+              <button type="button" id="btn-copy-codegs"
+                class="px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-slate-700 hover:opacity-90 text-white text-xs sm:text-sm font-semibold shadow-sm active:scale-95 transition">
+                📋 Salin Kod Code.gs Lengkap
+              </button>
+            </div>
+          </div>
+
+          <!-- KARTU 2: TETAPAN PERCUTIAN -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+            <div class="border-b border-slate-100 dark:border-slate-800 pb-3 mb-1">
+              <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">⚙️ Tetapan Umum Percutian</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Klik Edit pada mana-mana baris untuk kemas kini tarikh, kadar, penerbangan, penginapan & alamat Hangul.</p>
+            </div>
+            <div>${settingsRowsHtml}</div>
+          </div>
+
+          <!-- KARTU 3: ALAT SANDARAN DATA -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-3">
+            <div class="border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">📦 Alat Sandaran Data</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Muat turun salinan luar talian (JSON / CSV) atau import fail sandaran sedia ada.</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <button type="button" id="btn-export-json"
+                class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs sm:text-sm font-semibold transition">
+                <span>📤</span><span>Export JSON</span>
+              </button>
+              <button type="button" id="btn-export-csv"
+                class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs sm:text-sm font-semibold transition">
+                <span>📊</span><span>Export CSV</span>
+              </button>
+              <label class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs sm:text-sm font-semibold cursor-pointer transition">
+                <span>📥</span><span>Import JSON</span>
                 <input id="inp-import-json" type="file" accept=".json,application/json" class="hidden" />
               </label>
-
-              <button type="button" id="btn-export-csv"
-                class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 text-sm font-semibold transition">
-                <span>📊</span>
-                <span>Export Checklist & Itinerary (CSV)</span>
-              </button>
-
-              <button type="button" id="btn-reset-data"
-                class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/50 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 text-sm font-semibold transition">
-                <span>♻️</span>
-                <span>Reset ke Data Asal</span>
-              </button>
             </div>
           </div>
+
         </div>
       `;
     }
 
-    // ==================== MODALS (BORANG & PENGESAHAN) ====================
+    // ==================== MODALS (BORANG, TEKSI, STATUS SYNC & PENGESAHAN) ====================
     function closeModal() {
+      state.modalOpen = false;
       $('#modal-root').innerHTML = '';
     }
 
-    // Modal Pengesahan Tersuai (Menggantikan window.confirm)
     function openConfirmModal(title, message, onConfirm) {
+      state.modalOpen = true;
       $('#modal-root').innerHTML = `
         <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in" id="modal-backdrop">
           <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-sm w-full p-5 shadow-2xl">
             <h3 class="text-base font-bold text-slate-900 dark:text-white">${esc(title)}</h3>
             <p class="text-sm text-slate-600 dark:text-slate-300 mt-2">${esc(message)}</p>
             <div class="flex justify-end gap-2 mt-5">
-              <button type="button" id="modal-cancel" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition">
-                Batal
-              </button>
-              <button type="button" id="modal-ok" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition">
-                Ya, Teruskan
-              </button>
+              <button type="button" id="modal-cancel" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 transition">Batal</button>
+              <button type="button" id="modal-ok" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition">Ya, Padam</button>
             </div>
           </div>
         </div>
@@ -1221,372 +1662,256 @@
       };
     }
 
-    // Modal Skrin Besar Pemandu Teksi Korea
     function openTaxiCardModal(hangul, englishAddr) {
+      state.modalOpen = true;
       $('#modal-root').innerHTML = `
-        <div class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in" id="modal-backdrop">
-          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl text-center">
-            <span class="inline-block text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-900/50 dark:text-brand-200 mb-3">
+        <div class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in" id="modal-backdrop">
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl text-center">
+            <span class="inline-block text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200 mb-4">
               🚕 기사님, 여기로 가주세요 (Sila ke alamat ini)
             </span>
-            <p class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white leading-snug break-words my-4 select-all">
+            <p class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white leading-snug break-words my-4 select-all">
               ${esc(hangul)}
             </p>
-            ${englishAddr ? `<p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-3">${esc(englishAddr)}</p>` : ''}
-            <div class="flex justify-center gap-2.5 mt-6">
-              <button type="button" id="taxi-copy" class="px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition">
-                📋 Salin Teks
-              </button>
-              <button type="button" id="modal-cancel" class="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition">
-                Tutup
-              </button>
+            ${englishAddr ? `<p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-3 mt-3">${esc(englishAddr)}</p>` : ''}
+            <div class="flex justify-center gap-3 mt-6">
+              <button type="button" id="taxi-copy" class="px-5 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition">📋 Salin Teks</button>
+              <button type="button" id="modal-cancel" class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm font-semibold hover:bg-slate-200 transition">Tutup</button>
             </div>
           </div>
         </div>
       `;
       $('#modal-cancel').onclick = closeModal;
       $('#modal-backdrop').onclick = (e) => { if (e.target.id === 'modal-backdrop') closeModal(); };
-      $('#taxi-copy').onclick = () => copyTextToClipboard(hangul, 'Alamat Hangul disalin!');
+      $('#taxi-copy').onclick = () => copyTextToClipboard(hangul, 'Alamat Hangul disalin! 🚕');
     }
 
-    // Modal Tambah / Edit Checklist
-    function openChecklistModal(editId = null) {
-      const existing = editId ? state.data.checklist.find((x) => x.id === editId) : null;
-      const cats = [...new Set(state.data.checklist.map((x) => x.kategori).filter(Boolean))];
-      const members = state.data.members;
+    function openSyncDiagnosticsModal() {
+      state.modalOpen = true;
+      const diagText = state.syncStatus === 'error'
+        ? `Ralat sambungan ke Google Sheet: ${state.lastSyncError}`
+        : `Disegerakkan dengan Google Sheet${state.lastSyncTime ? ' pada ' + state.lastSyncTime.toLocaleTimeString('ms-MY') : ''}.`;
 
-      const memberToggles = members.map((m) => {
-        const val = existing?.statusAhli?.[m.nama] || 'Belum';
+      $('#modal-root').innerHTML = `
+        <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in" id="modal-backdrop">
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">🔄 Diagnostik Sambungan Google Sheet</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-300">${esc(diagText)}</p>
+            <div class="text-xs bg-slate-50 dark:bg-slate-800 p-3 rounded-xl font-mono break-all text-slate-600 dark:text-slate-300">
+              ${esc(state.apiUrl)}
+            </div>
+            <div class="flex flex-wrap justify-end gap-2 pt-1">
+              <button type="button" id="modal-cancel" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 dark:bg-slate-800">Tutup</button>
+              <button type="button" id="modal-goto-settings" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800 text-white dark:bg-slate-700">⚙️ Tetapan</button>
+              <button type="button" id="modal-retry-sync" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-brand-600 text-white">Cuba Semula ⟳</button>
+            </div>
+          </div>
+        </div>
+      `;
+      $('#modal-cancel').onclick = closeModal;
+      $('#modal-backdrop').onclick = (e) => { if (e.target.id === 'modal-backdrop') closeModal(); };
+      $('#modal-goto-settings').onclick = () => { closeModal(); switchTab('Tetapan'); };
+      $('#modal-retry-sync').onclick = () => {
+        closeModal();
+        fetchFromSheet({ silent: false, showToastOnSuccess: true });
+      };
+    }
+
+    // Penentu jenis input borang mengikut nama lajur Sheet
+    function getFieldType(sheet, header, keyName) {
+      if (sheet === 'Tetapan') {
+        if (/^Tarikh/.test(keyName)) return 'date';
+        if (/^Kadar/.test(keyName)) return 'number';
+        return 'area';
+      }
+      if (header === 'Fasa') return 'phase';
+      if (sheet === 'Checklist' && getMembersList().includes(header)) return 'yn';
+      if (header === 'Status') return 'status';
+      if (/^Tarikh/.test(header)) return 'date';
+      if (header === 'Masa') return 'time';
+      if (/\((RM|KRW)\)|^Hari$/.test(header)) return 'number';
+      if (/Nota|Link|Alahan/.test(header)) return 'area';
+      if (/Telefon|No\. Waris/.test(header)) return 'tel';
+      return 'text';
+    }
+
+    function openRowModal(sheet, rowNum = null) {
+      const d = state.data[sheet];
+      if (!d) return;
+
+      const existing = rowNum ? d.rows.find((x) => Number(x.row) === Number(rowNum)) : null;
+      const keyName = (sheet === 'Tetapan' && existing) ? existing.cells[idx(d, 'Kunci')] : '';
+      const fcols = d.formulaCols || [];
+      const fields = sheet === 'Tetapan'
+        ? ['Nilai']
+        : d.headers.filter((h) => !fcols.includes(h));
+
+      const cats = sheet === 'Checklist'
+        ? [...new Set(d.rows.map((r) => r.cells[idx(d, 'Kategori')]).filter(Boolean))]
+        : [];
+
+      const rate = getActiveRate();
+
+      const fieldsHtml = fields.map((h, i) => {
+        const colIdx = idx(d, h);
+        let val = existing && colIdx >= 0 ? existing.cells[colIdx] : '';
+        if (!existing && sheet === 'Checklist' && h === 'Fasa') val = state.activePhase;
+        if (!existing && sheet === 'Itinerary' && h === 'Bandar') val = 'Seoul';
+        if (!existing && sheet === 'Itinerary' && h === 'Status') val = 'Belum';
+        if (!existing && sheet === 'Checklist' && getMembersList().includes(h)) val = 'Belum';
+
+        const type = getFieldType(sheet, h, keyName);
+        const inputId = `field_${i}`;
+        const lockedBySheet = Boolean(existing && Array.isArray(existing.f) && existing.f.includes(colIdx));
+        const disAttr = lockedBySheet ? 'disabled' : '';
+
+        let controlHtml = '';
+        if (type === 'phase') {
+          controlHtml = `<select id="${inputId}" ${disAttr} class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm">${PHASES.map((p) => `<option value="${p}" ${(val || 'Before') === p ? 'selected' : ''}>${p}</option>`).join('')}</select>`;
+        } else if (type === 'yn') {
+          controlHtml = `<select id="${inputId}" ${disAttr} class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm">${YN_OPTIONS.map((o) => `<option value="${o}" ${(val || 'Belum') === o ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
+        } else if (type === 'status') {
+          controlHtml = `<select id="${inputId}" ${disAttr} class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm">${STATUS_OPTIONS.map((o) => `<option value="${o}" ${(val || 'Belum') === o ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
+        } else if (type === 'date') {
+          controlHtml = `<input id="${inputId}" ${disAttr} type="date" value="${toISO(val)}" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />`;
+        } else if (type === 'time') {
+          controlHtml = `<input id="${inputId}" ${disAttr} type="time" value="${esc(val)}" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />`;
+        } else if (type === 'number') {
+          controlHtml = `<input id="${inputId}" ${disAttr} type="number" step="any" value="${esc(val)}" data-header-name="${esc(h)}" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold" />`;
+        } else if (type === 'area') {
+          controlHtml = `<textarea id="${inputId}" ${disAttr} rows="2" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm">${esc(val)}</textarea>`;
+        } else if (type === 'tel') {
+          controlHtml = `<input id="${inputId}" ${disAttr} type="tel" value="${esc(val)}" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />`;
+        } else {
+          controlHtml = `<input id="${inputId}" ${disAttr} type="text" value="${esc(val)}" ${h === 'Kategori' ? 'list="cat-datalist"' : ''} class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />`;
+        }
+
+        let extraPreview = '';
+        if (sheet === 'Itinerary' && h === 'Anggaran (KRW)') {
+          const initRm = ((Number(val) || 0) * rate).toFixed(2);
+          extraPreview = `
+            <div class="mt-1.5 flex items-center justify-between text-xs bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 px-3 py-1.5 rounded-lg border border-emerald-200/70 dark:border-emerald-800/70">
+              <span>Setara (RM) auto (kadar ${rate}):</span>
+              <strong id="itin-rm-preview">RM ${initRm}</strong>
+            </div>
+          `;
+        }
+
         return `
-          <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
-            <span class="text-xs font-semibold">${esc(m.nama)}</span>
-            <select data-modal-member="${esc(m.nama)}" class="text-xs font-semibold rounded-lg px-2 py-1 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900">
-              ${YN_OPTIONS.map((o) => `<option value="${o}" ${o === val ? 'selected' : ''}>${o}</option>`).join('')}
-            </select>
+          <div>
+            <label for="${inputId}" class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+              ${esc(keyName || h)}${lockedBySheet ? ' 🔒 (formula Sheet)' : ''}
+            </label>
+            ${controlHtml}
+            ${extraPreview}
           </div>
         `;
       }).join('');
 
+      state.modalOpen = true;
       $('#modal-root').innerHTML = `
         <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in" id="modal-backdrop">
-          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-5 shadow-2xl">
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-2xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-5 shadow-2xl">
             <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
-              ${existing ? '✏️ Edit Item Checklist' : '➕ Tambah Item Checklist'}
+              ${existing ? '✏️ Edit' : '➕ Tambah'} · ${esc(keyName || sheet)}
             </h3>
-            <form id="form-chk-modal" class="space-y-3.5">
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-xs font-semibold text-slate-500 mb-1">Fasa</label>
-                  <select id="m-chk-fasa" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm">
-                    ${PHASES.map((p) => `<option value="${p}" ${(existing ? existing.fasa : state.activePhase) === p ? 'selected' : ''}>${p}</option>`).join('')}
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-slate-500 mb-1">Kategori</label>
-                  <input id="m-chk-kat" type="text" list="chk-cat-list" required value="${esc(existing?.kategori || '')}" placeholder="Cth: Dokumen"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />
-                  <datalist id="chk-cat-list">${cats.map((c) => `<option value="${esc(c)}">`).join('')}</datalist>
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-xs font-semibold text-slate-500 mb-1">Nama Item *</label>
-                <input id="m-chk-item" type="text" required value="${esc(existing?.item || '')}" placeholder="Cth: T-Money Card / Powerbank"
-                  class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />
-              </div>
-
-              <div>
-                <label class="block text-xs font-semibold text-slate-500 mb-1">Anggaran / orang (RM)</label>
-                <input id="m-chk-anggaran" type="number" step="any" min="0" value="${existing ? existing.anggaran : 0}"
-                  class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />
-              </div>
-
-              <div>
-                <label class="block text-xs font-semibold text-slate-500 mb-1.5">Status Setiap Ahli</label>
-                <div class="grid grid-cols-2 gap-2">${memberToggles}</div>
-              </div>
-
-              <div>
-                <label class="block text-xs font-semibold text-slate-500 mb-1">Nota</label>
-                <textarea id="m-chk-nota" rows="2" placeholder="Catatan tambahan atau pautan..."
-                  class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm">${esc(existing?.nota || '')}</textarea>
-              </div>
-
+            <datalist id="cat-datalist">${cats.map((c) => `<option value="${esc(c)}">`).join('')}</datalist>
+            <form id="row-editor-form" class="space-y-3.5">
+              ${fieldsHtml}
               <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button type="button" id="modal-cancel" class="px-4 py-2 rounded-xl text-sm font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition">Batal</button>
-                <button type="submit" class="px-5 py-2 rounded-xl text-sm font-semibold bg-brand-600 text-white hover:bg-brand-700 transition">Simpan</button>
+                <button type="submit" id="modal-save-btn" class="px-5 py-2 rounded-xl text-sm font-semibold bg-brand-600 text-white hover:bg-brand-700 transition">Simpan</button>
               </div>
             </form>
           </div>
         </div>
       `;
 
+      const krwInput = document.querySelector('[data-header-name="Anggaran (KRW)"]');
+      if (krwInput) {
+        krwInput.addEventListener('input', () => {
+          const val = parseFloat(krwInput.value) || 0;
+          const prev = $('#itin-rm-preview');
+          if (prev) prev.textContent = `RM ${(val * getActiveRate()).toFixed(2)}`;
+        });
+      }
+
       $('#modal-cancel').onclick = closeModal;
       $('#modal-backdrop').onclick = (e) => { if (e.target.id === 'modal-backdrop') closeModal(); };
-      $('#form-chk-modal').onsubmit = (e) => {
+
+      $('#row-editor-form').onsubmit = async (e) => {
         e.preventDefault();
-        const statusAhli = {};
-        document.querySelectorAll('[data-modal-member]').forEach((sel) => {
-          statusAhli[sel.dataset.modalMember] = sel.value;
+        const values = {};
+        fields.forEach((h, i) => {
+          const el = $(`#field_${i}`);
+          if (!el || el.disabled) return;
+          const type = getFieldType(sheet, h, keyName);
+          values[h] = type === 'date' ? fromISO(el.value) : el.value.trim();
         });
 
-        const payload = {
-          id: existing ? existing.id : uid('c'),
-          fasa: $('#m-chk-fasa').value,
-          kategori: $('#m-chk-kat').value.trim() || 'Umum',
-          item: $('#m-chk-item').value.trim(),
-          anggaran: parseFloat($('#m-chk-anggaran').value) || 0,
-          statusAhli,
-          nota: $('#m-chk-nota').value.trim()
-        };
-
+        // Kemas kini UI serta-merta (Optimistic UI)
         if (existing) {
-          const idx = state.data.checklist.findIndex((x) => x.id === existing.id);
-          state.data.checklist[idx] = payload;
-        } else {
-          state.data.checklist.push(payload);
-        }
-        state.activePhase = payload.fasa;
-        saveState();
-        closeModal();
-        renderAll();
-        showToast(existing ? 'Item dikemas kini ✔' : 'Item ditambah ✔');
-      };
-    }
-
-    // Modal Tambah / Edit Itinerary
-    function openItineraryModal(editId = null) {
-      const existing = editId ? state.data.itinerary.find((x) => x.id === editId) : null;
-      const defaultDay = existing ? existing.hari : (state.data.itinerary.length ? Math.max(...state.data.itinerary.map((x) => Number(x.hari) || 1)) : 1);
-
-      $('#modal-root').innerHTML = `
-        <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in" id="modal-backdrop">
-          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-5 shadow-2xl">
-            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
-              ${existing ? '✏️ Edit Aktiviti Itinerary' : '➕ Tambah Aktiviti Itinerary'}
-            </h3>
-            <form id="form-itin-modal" class="space-y-3.5">
-              <div class="grid grid-cols-3 gap-2.5">
-                <div>
-                  <label class="block text-xs font-semibold text-slate-500 mb-1">Hari Ke-</label>
-                  <input id="m-it-hari" type="number" min="1" required value="${esc(defaultDay)}"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-slate-500 mb-1">Tarikh</label>
-                  <input id="m-it-tarikh" type="date" value="${esc(existing?.tarikh || '')}"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-slate-500 mb-1">Masa</label>
-                  <input id="m-it-masa" type="time" value="${esc(existing?.masa || '')}"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-xs font-semibold text-slate-500 mb-1">Aktiviti *</label>
-                <input id="m-it-aktiviti" type="text" required value="${esc(existing?.aktiviti || '')}" placeholder="Cth: Lawatan ke Gyeongbokgung Palace & Sewa Hanbok"
-                  class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-xs font-semibold text-slate-500 mb-1">Lokasi (Auto Peta Google & Naver)</label>
-                  <input id="m-it-lokasi" type="text" value="${esc(existing?.lokasi || '')}" placeholder="Cth: Gyeongbokgung Palace"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-slate-500 mb-1">Bandar</label>
-                  <input id="m-it-bandar" type="text" value="${esc(existing?.bandar || 'Seoul')}" placeholder="Cth: Seoul / Busan / Jeju"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                <div>
-                  <label class="block text-xs font-semibold text-slate-500 mb-1">Pengangkutan</label>
-                  <input id="m-it-transport" type="text" value="${esc(existing?.pengangkutan || '')}" placeholder="Cth: Subway Line 3"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-slate-500 mb-1">Anggaran (KRW)</label>
-                  <input id="m-it-krw" type="number" step="any" min="0" value="${existing ? existing.anggaranKrw : 0}"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>
-                  <select id="m-it-status" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm">
-                    ${STATUS_OPTIONS.map((s) => `<option value="${s}" ${(existing?.status || 'Belum') === s ? 'selected' : ''}>${s}</option>`).join('')}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-xs font-semibold text-slate-500 mb-1">Pautan Tempahan / Tiket (jika ada)</label>
-                <input id="m-it-tempahan" type="text" value="${esc(existing?.tempahan || '')}" placeholder="https://..."
-                  class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />
-              </div>
-
-              <div>
-                <label class="block text-xs font-semibold text-slate-500 mb-1">Nota</label>
-                <textarea id="m-it-nota" rows="2" placeholder="Tips masa melawat, kedai makan halal berdekatan..."
-                  class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm">${esc(existing?.nota || '')}</textarea>
-              </div>
-
-              <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <button type="button" id="modal-cancel" class="px-4 py-2 rounded-xl text-sm font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition">Batal</button>
-                <button type="submit" class="px-5 py-2 rounded-xl text-sm font-semibold bg-brand-600 text-white hover:bg-brand-700 transition">Simpan</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      `;
-
-      $('#modal-cancel').onclick = closeModal;
-      $('#modal-backdrop').onclick = (e) => { if (e.target.id === 'modal-backdrop') closeModal(); };
-      $('#form-itin-modal').onsubmit = (e) => {
-        e.preventDefault();
-        const payload = {
-          id: existing ? existing.id : uid('i'),
-          hari: parseInt($('#m-it-hari').value, 10) || 1,
-          tarikh: $('#m-it-tarikh').value,
-          masa: $('#m-it-masa').value,
-          aktiviti: $('#m-it-aktiviti').value.trim(),
-          lokasi: $('#m-it-lokasi').value.trim(),
-          bandar: $('#m-it-bandar').value.trim(),
-          pengangkutan: $('#m-it-transport').value.trim(),
-          anggaranKrw: parseFloat($('#m-it-krw').value) || 0,
-          tempahan: $('#m-it-tempahan').value.trim(),
-          status: $('#m-it-status').value,
-          nota: $('#m-it-nota').value.trim()
-        };
-
-        if (existing) {
-          const idx = state.data.itinerary.findIndex((x) => x.id === existing.id);
-          state.data.itinerary[idx] = payload;
-        } else {
-          state.data.itinerary.push(payload);
-        }
-        saveState();
-        closeModal();
-        renderAll();
-        showToast(existing ? 'Aktiviti dikemas kini ✔' : 'Aktiviti ditambah ✔');
-      };
-    }
-
-    // Modal Tambah / Edit Ahli
-    function openMemberModal(editId = null) {
-      const existing = editId ? state.data.members.find((x) => x.id === editId) : null;
-
-      $('#modal-root').innerHTML = `
-        <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in" id="modal-backdrop">
-          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-5 shadow-2xl">
-            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">
-              ${existing ? `✏️ Kemaskini Ahli · ${esc(existing.nama)}` : '➕ Tambah Ahli Baharu'}
-            </h3>
-            <form id="form-mem-modal" class="space-y-3.5">
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-xs font-semibold text-slate-500 mb-1">Nama *</label>
-                  <input id="m-mem-nama" type="text" required value="${esc(existing?.nama || '')}" placeholder="Nama panggilan"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-slate-500 mb-1">No. Telefon</label>
-                  <input id="m-mem-tel" type="tel" value="${esc(existing?.telefon || '')}" placeholder="01X-XXXXXXX"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-xs font-semibold text-slate-500 mb-1">No. Pasport</label>
-                  <input id="m-mem-pasport" type="text" value="${esc(existing?.noPasport || '')}" placeholder="A12345678"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm uppercase" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-slate-500 mb-1">Tarikh Luput Pasport</label>
-                  <input id="m-mem-luput" type="date" value="${esc(existing?.tarikhLuput || '')}"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-xs font-semibold text-slate-500 mb-1">Nama Waris Kecemasan</label>
-                  <input id="m-mem-waris" type="text" value="${esc(existing?.waris || '')}" placeholder="Ibu / Ayah / Pasangan"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-slate-500 mb-1">No. Telefon Waris</label>
-                  <input id="m-mem-nowaris" type="tel" value="${esc(existing?.noWaris || '')}" placeholder="01X-XXXXXXX"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-xs font-semibold text-slate-500 mb-1">Alahan / Nota Kesihatan</label>
-                <textarea id="m-mem-alahan" rows="2" placeholder="Alahan makanan laut, ubat-ubatan, dsb."
-                  class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm">${esc(existing?.alahan || '')}</textarea>
-              </div>
-
-              <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <button type="button" id="modal-cancel" class="px-4 py-2 rounded-xl text-sm font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition">Batal</button>
-                <button type="submit" class="px-5 py-2 rounded-xl text-sm font-semibold bg-brand-600 text-white hover:bg-brand-700 transition">Simpan</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      `;
-
-      $('#modal-cancel').onclick = closeModal;
-      $('#modal-backdrop').onclick = (e) => { if (e.target.id === 'modal-backdrop') closeModal(); };
-      $('#form-mem-modal').onsubmit = (e) => {
-        e.preventDefault();
-        const newName = $('#m-mem-nama').value.trim();
-        if (!newName) return;
-
-        const oldName = existing?.nama;
-        const payload = {
-          id: existing ? existing.id : uid('m'),
-          nama: newName,
-          telefon: $('#m-mem-tel').value.trim(),
-          noPasport: $('#m-mem-pasport').value.trim().toUpperCase(),
-          tarikhLuput: $('#m-mem-luput').value,
-          waris: $('#m-mem-waris').value.trim(),
-          noWaris: $('#m-mem-nowaris').value.trim(),
-          alahan: $('#m-mem-alahan').value.trim()
-        };
-
-        if (existing) {
-          const idx = state.data.members.findIndex((x) => x.id === existing.id);
-          state.data.members[idx] = payload;
-          // Jika nama ahli ditukar, kemas kini kunci dalam statusAhli checklist
-          if (oldName && oldName !== newName) {
-            state.data.checklist.forEach((chk) => {
-              if (chk.statusAhli && Object.prototype.hasOwnProperty.call(chk.statusAhli, oldName)) {
-                chk.statusAhli[newName] = chk.statusAhli[oldName];
-                delete chk.statusAhli[oldName];
-              }
-            });
-          }
-        } else {
-          state.data.members.push(payload);
-          state.data.checklist.forEach((chk) => {
-            if (!chk.statusAhli) chk.statusAhli = {};
-            chk.statusAhli[newName] = 'Belum';
+          d.headers.forEach((h, colIdx) => {
+            if (Object.prototype.hasOwnProperty.call(values, h)) {
+              existing.cells[colIdx] = values[h];
+            }
           });
+        } else {
+          const maxRowNum = d.rows.reduce((m, r) => Math.max(m, Number(r.row) || 1), 1);
+          const newCells = d.headers.map((h) => (Object.prototype.hasOwnProperty.call(values, h) ? values[h] : ''));
+          d.rows.push({ row: maxRowNum + 1, cells: newCells, f: [] });
         }
 
-        saveState();
+        if (sheet === 'Checklist' && values.Fasa) {
+          state.activePhase = values.Fasa;
+        }
+
+        saveCachedData();
         closeModal();
+        updateConverterRateLabel();
         renderAll();
-        showToast(existing ? 'Maklumat ahli dikemas kini ✔' : 'Ahli ditambah ✔');
+
+        await postToSheet(
+          { action: 'saveRow', sheet, row: existing ? Number(existing.row) : null, values },
+          existing ? 'Dikemas kini ✔' : 'Ditambah ✔'
+        );
       };
     }
 
-    // ==================== EXPORT / IMPORT / RESET ====================
+    // ==================== KEMAS KINI INLINE & PADAM ====================
+    async function handleInlineUpdate(sheet, rowNum, header, newValue) {
+      const d = state.data[sheet];
+      if (!d) return;
+      const r = d.rows.find((x) => Number(x.row) === Number(rowNum));
+      const c = idx(d, header);
+      if (!r || c < 0) return;
+
+      r.cells[c] = newValue;
+      saveCachedData();
+      renderMainContent();
+
+      await postToSheet(
+        { action: 'updateCell', sheet, row: Number(rowNum), header, value: newValue },
+        `${header}: ${newValue} ✔`
+      );
+    }
+
+    function handleDeleteRow(sheet, rowNum) {
+      openConfirmModal('Padam Baris Ini?', 'Data ini akan dipadam daripada aplikasi dan Google Sheet anda.', async () => {
+        const d = state.data[sheet];
+        if (!d) return;
+        d.rows = d.rows.filter((x) => Number(x.row) !== Number(rowNum));
+        saveCachedData();
+        renderAll();
+
+        await postToSheet(
+          { action: 'removeRow', sheet, row: Number(rowNum) },
+          'Baris dipadam'
+        );
+      });
+    }
+
+    // ==================== EKSPORT (JSON & CSV) & IMPORT ====================
     function downloadFile(filename, content, mimeType) {
       const blob = new Blob([content], { type: mimeType });
       const url = URL.createObjectURL(blob);
@@ -1606,48 +1931,21 @@
     }
 
     function exportCsv() {
-      const members = state.data.members.map((m) => m.nama);
-      const rate = Number(state.data.settings.kadar) || 0.003063;
-      const csvEsc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-
-      const lines = [];
-      lines.push('=== CHECKLIST PERSEDIAAN ===');
-      lines.push(['Fasa', 'Kategori', 'Item', 'Anggaran / orang (RM)', ...members, 'Nota'].map(csvEsc).join(','));
-      state.data.checklist.forEach((c) => {
-        lines.push([
-          c.fasa,
-          c.kategori,
-          c.item,
-          c.anggaran,
-          ...members.map((m) => c.statusAhli?.[m] || 'Belum'),
-          c.nota
-        ].map(csvEsc).join(','));
-      });
-
-      lines.push('');
-      lines.push('=== ITINERARY PERJALANAN ===');
-      lines.push(['Hari', 'Tarikh', 'Masa', 'Aktiviti', 'Lokasi', 'Bandar', 'Pengangkutan', 'Anggaran (KRW)', 'Setara (RM)', 'Status', 'Tempahan', 'Nota'].map(csvEsc).join(','));
-      state.data.itinerary.forEach((it) => {
-        const rm = ((Number(it.anggaranKrw) || 0) * rate).toFixed(2);
-        lines.push([
-          it.hari,
-          it.tarikh,
-          it.masa,
-          it.aktiviti,
-          it.lokasi,
-          it.bandar,
-          it.pengangkutan,
-          it.anggaranKrw,
-          rm,
-          it.status,
-          it.tempahan,
-          it.nota
-        ].map(csvEsc).join(','));
-      });
+      const escapeCsv = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+      const sections = ['Checklist', 'Itinerary', 'Ahli', 'Tetapan'].map((name) => {
+        const d = state.data[name];
+        if (!d) return '';
+        const lines = [
+          `=== ${name.toUpperCase()} ===`,
+          d.headers.map(escapeCsv).join(','),
+          ...d.rows.map((r) => r.cells.map(escapeCsv).join(','))
+        ];
+        return lines.join('\r\n');
+      }).filter(Boolean).join('\r\n\r\n');
 
       const stamp = new Date().toISOString().slice(0, 10);
-      downloadFile(`Korea_Trip_Planner_${stamp}.csv`, '\uFEFF' + lines.join('\n'), 'text/csv;charset=utf-8;');
-      showToast('Fail CSV dimuat turun 📊');
+      downloadFile(`Korea_Trip_Planner_${stamp}.csv`, '\uFEFF' + sections, 'text/csv;charset=utf-8;');
+      showToast('Fail CSV berjaya dieksport 📊');
     }
 
     function handleImportJson(file) {
@@ -1656,11 +1954,11 @@
       reader.onload = (e) => {
         try {
           const parsed = JSON.parse(e.target.result);
-          if (!parsed || !parsed.settings || !Array.isArray(parsed.members) || !Array.isArray(parsed.checklist)) {
+          if (!parsed || !parsed.Checklist || !parsed.Tetapan || !parsed.Ahli || !parsed.Itinerary) {
             throw new Error('Format fail tidak sah');
           }
           state.data = parsed;
-          saveState();
+          saveCachedData();
           updateConverterRateLabel();
           renderAll();
           showToast('Data berjaya diimport! 📥');
@@ -1671,37 +1969,59 @@
       reader.readAsText(file);
     }
 
-    // ==================== MASTER RENDER & EVENT DELEGATION ====================
+    // ==================== RENDER UTAMA & EVENT LISTENERS ====================
     function renderMainContent() {
-      const container = $('#main-content');
-      if (state.activeTab === 'Checklist') container.innerHTML = renderChecklistTab();
-      else if (state.activeTab === 'Itinerary') container.innerHTML = renderItineraryTab();
-      else if (state.activeTab === 'Ahli') container.innerHTML = renderAhliTab();
-      else if (state.activeTab === 'Tetapan') container.innerHTML = renderTetapanTab();
+      const main = $('#main-content');
+      if (state.activeTab === 'Checklist') main.innerHTML = renderChecklistTab();
+      else if (state.activeTab === 'Itinerary') main.innerHTML = renderItineraryTab();
+      else if (state.activeTab === 'Ahli') main.innerHTML = renderAhliTab();
+      else if (state.activeTab === 'Tetapan') main.innerHTML = renderTetapanTab();
     }
 
     function renderAll() {
+      updateSyncPillUI();
       renderSummaryBanner();
       renderTabs();
       renderMainContent();
     }
 
-    // Pasang pendengar acara (Event Listeners)
     document.addEventListener('DOMContentLoaded', () => {
       initTheme();
       updateConverterRateLabel();
-      renderAll();
+      renderAll(); // Papar data serta-merta dari cache/default tanpa skrin kosong
 
-      // Tema & Pengira
+      // Terus tarik data terkini dari Google Sheet secara automatik apabila halaman dibuka
+      fetchFromSheet({ silent: false, showToastOnSuccess: false });
+
+      // Auto-sync setiap 20 saat apabila tab aktif dan tiada modal terbuka
+      setInterval(() => {
+        if (!document.hidden && !state.modalOpen && state.pendingOps === 0) {
+          fetchFromSheet({ silent: true });
+        }
+      }, POLL_MS);
+
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && !state.modalOpen && state.pendingOps === 0) {
+          fetchFromSheet({ silent: true });
+        }
+      });
+
+      // Kawalan Header & Pengira Mata Wang
       $('#btn-theme').onclick = toggleTheme;
       $('#btn-toggle-converter').onclick = () => {
         state.showConverter = !state.showConverter;
         $('#converter-drawer').classList.toggle('hidden', !state.showConverter);
       };
+      $('#btn-sync-pill').onclick = () => {
+        if (state.syncStatus === 'error') {
+          openSyncDiagnosticsModal();
+        } else {
+          fetchFromSheet({ silent: false, showToastOnSuccess: true });
+        }
+      };
 
       $('#inp-krw').addEventListener('input', syncConverterFromKrw);
       $('#inp-rm').addEventListener('input', syncConverterFromRm);
-
       document.querySelectorAll('.preset-krw').forEach((btn) => {
         btn.onclick = () => {
           $('#inp-krw').value = btn.dataset.krwPreset;
@@ -1709,14 +2029,14 @@
         };
       });
 
-      // Butang FAB (+ Tambah)
+      // Butang Terapung (+ Tambah)
       $('#fab-add').onclick = () => {
-        if (state.activeTab === 'Checklist') openChecklistModal();
-        else if (state.activeTab === 'Itinerary') openItineraryModal();
-        else if (state.activeTab === 'Ahli') openMemberModal();
+        if (state.activeTab !== 'Tetapan') {
+          openRowModal(state.activeTab, null);
+        }
       };
 
-      // Delegasi Klik pada Navigasi & Main Content
+      // Delegasi Klik
       document.addEventListener('click', (e) => {
         const tabBtn = e.target.closest('[data-tab-id]');
         if (tabBtn) {
@@ -1731,138 +2051,71 @@
           return;
         }
 
-        // Edit & Padam Checklist
-        const editChk = e.target.closest('[data-edit-chk]');
-        if (editChk) {
-          openChecklistModal(editChk.dataset.editChk);
-          return;
-        }
-        const delChk = e.target.closest('[data-del-chk]');
-        if (delChk) {
-          openConfirmModal('Padam Item Checklist?', 'Item ini akan dipadam daripada senarai persediaan.', () => {
-            state.data.checklist = state.data.checklist.filter((x) => x.id !== delChk.dataset.delChk);
-            saveState();
-            renderAll();
-            showToast('Item dipadam');
-          });
+        const actBtn = e.target.closest('[data-act]');
+        if (actBtn) {
+          const { act, sheet, row } = actBtn.dataset;
+          if (act === 'edit') openRowModal(sheet, Number(row));
+          else if (act === 'del') handleDeleteRow(sheet, Number(row));
           return;
         }
 
-        // Edit & Padam Itinerary
-        const editItin = e.target.closest('[data-edit-itin]');
-        if (editItin) {
-          openItineraryModal(editItin.dataset.editItin);
-          return;
-        }
-        const delItin = e.target.closest('[data-del-itin]');
-        if (delItin) {
-          openConfirmModal('Padam Aktiviti?', 'Aktiviti ini akan dipadam daripada jadual perjalanan.', () => {
-            state.data.itinerary = state.data.itinerary.filter((x) => x.id !== delItin.dataset.delItin);
-            saveState();
-            renderAll();
-            showToast('Aktiviti dipadam');
-          });
+        // Kawalan Sambungan Google Sheet dalam tab Tetapan
+        if (e.target.closest('#btn-save-test-api')) {
+          const inp = $('#inp-api-url');
+          const url = inp ? inp.value.trim() : '';
+          if (!url) {
+            showToast('Sila masukkan URL Web App (/exec)');
+            return;
+          }
+          setCustomScriptUrl(url);
+          renderMainContent();
+          fetchFromSheet({ silent: false, showToastOnSuccess: true });
           return;
         }
 
-        // Edit & Padam Ahli
-        const editMem = e.target.closest('[data-edit-member]');
-        if (editMem) {
-          openMemberModal(editMem.dataset.editMember);
-          return;
-        }
-        const delMem = e.target.closest('[data-del-member]');
-        if (delMem) {
-          const mem = state.data.members.find((x) => x.id === delMem.dataset.delMember);
-          if (!mem) return;
-          openConfirmModal(`Padam Ahli "${mem.nama}"?`, 'Rekod ahli ini dan lajur statusnya dalam checklist akan dipadam.', () => {
-            state.data.members = state.data.members.filter((x) => x.id !== mem.id);
-            state.data.checklist.forEach((chk) => {
-              if (chk.statusAhli) delete chk.statusAhli[mem.nama];
-            });
-            saveState();
-            renderAll();
-            showToast('Ahli dipadam');
-          });
+        if (e.target.closest('#btn-reset-default-url')) {
+          setCustomScriptUrl(DEFAULT_SCRIPT_URL);
+          renderMainContent();
+          fetchFromSheet({ silent: false, showToastOnSuccess: true });
           return;
         }
 
-        // Butang Export & Reset di tab Tetapan
+        if (e.target.closest('#btn-copy-codegs')) {
+          copyTextToClipboard(APPS_SCRIPT_CODE, 'Kod Code.gs lengkap disalin ke papan keratan! 📋');
+          return;
+        }
+
         if (e.target.closest('#btn-export-json')) {
           exportJson();
           return;
         }
+
         if (e.target.closest('#btn-export-csv')) {
           exportCsv();
           return;
         }
-        if (e.target.closest('#btn-reset-data')) {
-          openConfirmModal('Reset ke Data Asal?', 'Semua perubahan semasa akan digantikan semula dengan data asal Korea Trip Planner.', () => {
-            state.data = getDefaultData();
-            saveState();
-            updateConverterRateLabel();
-            renderAll();
-            showToast('Data dikembalikan ke tetapan asal ♻️');
-          });
-          return;
-        }
       });
 
-      // Delegasi Perubahan Dropdown Inline & Input Fail
+      // Delegasi Perubahan Dropdown Inline & Import JSON
       document.addEventListener('change', (e) => {
-        if (e.target.matches('.chk-inline-select')) {
-          const { chkId, member } = e.target.dataset;
-          const item = state.data.checklist.find((x) => x.id === chkId);
-          if (item) {
-            if (!item.statusAhli) item.statusAhli = {};
-            item.statusAhli[member] = e.target.value;
-            saveState();
-            renderMainContent();
-            showToast(`${member}: ${e.target.value} ✔`);
-          }
+        if (e.target.matches('select[data-inline-chk]')) {
+          const { row, header } = e.target.dataset;
+          handleInlineUpdate('Checklist', Number(row), header, e.target.value);
           return;
         }
-
-        if (e.target.matches('.itin-status-select')) {
-          const item = state.data.itinerary.find((x) => x.id === e.target.dataset.itinId);
-          if (item) {
-            item.status = e.target.value;
-            saveState();
-            renderMainContent();
-            showToast(`Status: ${e.target.value} ✔`);
-          }
+        if (e.target.matches('select[data-inline-itin]')) {
+          const { row, header } = e.target.dataset;
+          handleInlineUpdate('Itinerary', Number(row), header, e.target.value);
           return;
         }
-
         if (e.target.id === 'inp-import-json') {
           handleImportJson(e.target.files[0]);
           e.target.value = '';
         }
       });
 
-      // Delegasi Submit Borang Tetapan
-      document.addEventListener('submit', (e) => {
-        if (e.target.id === 'form-tetapan') {
-          e.preventDefault();
-          const newRate = parseFloat($('#set-kadar').value);
-          state.data.settings = {
-            kadar: !isNaN(newRate) && newRate > 0 ? newRate : 0.003063,
-            tarikhBerlepas: $('#set-berlepas').value,
-            tarikhBalik: $('#set-balik').value,
-            penerbangan: $('#set-penerbangan').value.trim(),
-            penginapan: $('#set-penginapan').value.trim(),
-            alamatHangul: $('#set-hangul').value.trim()
-          };
-          saveState();
-          updateConverterRateLabel();
-          renderAll();
-          showToast('Tetapan disimpan ✔');
-        }
-      });
-
-      // Tutup modal dengan kekunci Escape
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && $('#modal-root').innerHTML !== '') {
+        if (e.key === 'Escape' && state.modalOpen) {
           closeModal();
         }
       });
